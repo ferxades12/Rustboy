@@ -235,6 +235,39 @@ impl CPU{
         self.SUB(self.memory[adress]);
     }
 
+    fn ADC(&mut self, num: u8) {
+        self.ADD(num);
+
+        if (self.F & 0b0001_0000) != 0 {self.ADD(1);}
+    }
+
+    fn ADC_register8(&mut self, reg: Register8) {
+        self.ADC(self.get_register8(reg));
+    }
+
+    fn ADC_indirect_adress(&mut self, reg: RegisterPair) {
+        let adress = self.get_register_pair(reg) as usize;
+        self.ADC(self.memory[adress]);
+    }
+
+    fn SBC(&mut self, num: u8){
+        self.SUB(num);
+
+        if (self.F & 0b0001_0000) != 0 {self.SUB(1);}
+    }
+
+    fn SBC_register8(&mut self, reg: Register8) {
+        self.SBC(self.get_register8(reg));
+    }
+
+    fn SBC_indirect_adress(&mut self, reg: RegisterPair) {
+        let adress = self.get_register_pair(reg) as usize;
+        self.SBC(self.memory[adress]);
+    }
+
+    fn AND(&mut self, num: u8){
+        
+    }
 
 }
 
