@@ -51,8 +51,26 @@ struct CPU {
 }
 
 impl CPU{
+    fn new() -> CPU {
+        CPU {
+            PC: 0100,
+            SP: 0,
+            A: 0,
+            B: 0,
+            C: 0,
+            D:0, 
+            E: 0,
+            H: 0,
+            L:0,
+            IR: 0,
+            IE: 0,
+            F:0,
+            memory: [0; MEMORY_SIZE], // Inicializa la memoria a cero
+        }
+    }
+
      // Accede a un registro individual
-     fn get_register8(&self, reg: Register8) -> u8 {
+    fn get_register8(&self, reg: Register8) -> u8 {
         match reg {
             Register8::A => self.A,
             Register8::B => self.B,
@@ -68,6 +86,15 @@ impl CPU{
         match reg {
             Register16::PC => self.PC,
             Register16::SP => self.SP
+        }
+    }
+
+      // Accede a una pareja de registros
+    fn get_register_pair(&self, pair: RegisterPair) -> u16 {
+        match pair {
+            RegisterPair::HL => ((self.H as u16) << 8) | (self.L as u16),
+            RegisterPair::DE => ((self.D as u16) << 8) | (self.E as u16),
+            RegisterPair::BC => ((self.B as u16) << 8) | (self.C as u16),
         }
     }
 
@@ -90,16 +117,6 @@ impl CPU{
             Register16::SP => self.SP = value
         }
     }
-
-    // Accede a una pareja de registros
-    fn get_register_pair(&self, pair: RegisterPair) -> u16 {
-        match pair {
-            RegisterPair::HL => ((self.H as u16) << 8) | (self.L as u16),
-            RegisterPair::DE => ((self.D as u16) << 8) | (self.E as u16),
-            RegisterPair::BC => ((self.B as u16) << 8) | (self.C as u16),
-        }
-    }
-
     // Modifica una pareja de registros
     fn set_register_pair(&mut self, pair: RegisterPair, value: u16) {
         match pair {
@@ -118,30 +135,20 @@ impl CPU{
         }
     }
 
-    fn new() -> CPU {
-        CPU {
-            PC: 0100,
-            SP: 0,
-            A: 0,
-            B: 0,
-            C: 0,
-            D:0, 
-            E: 0,
-            H: 0,
-            L:0,
-            IR: 0,
-            IE: 0,
-            F:0,
-            memory: [0; MEMORY_SIZE], // Inicializa la memoria a cero
-        }
-    }
-
     fn LD_reg8_to_reg8(&mut self, To: Register8, From: Register8){
         self.set_register8(To, self.get_register8(From));
     }
 
-    fn LD_num_to_reg8(&mut self, To: Register8, From: u8){
+    fn LD_value_to_reg8(&mut self, To: Register8, From: u8){
         self.set_register8(To, From);
+    }
+
+    fn LD_value_to_reg16(&mut self, To: Register16, From: u16){
+        self.set_register16(To, From);
+    }
+
+    fn LD_value_to_pair(&mut self, To: RegisterPair, From: u16){
+        self.set_register_pair(To, From);
     }
 
     fn LD_adress_to_reg8(&mut self, To: Register8, From: usize){
@@ -149,11 +156,35 @@ impl CPU{
     }
 
     fn LD_adress_to_reg16(&mut self, To: Register16, From: usize){
-        let value = (self.memory[From] as u16) << 8 | self.memory[From + 1] as u16;
+        let value = (self.memory[From + 1] as u16) << 8 | self.memory[From] as u16;
         self.set_register16(To, value);
     }
 
+    fn LD_indirect_adress_to_reg8(&mut self, To: Register8, From: RegisterPair){
+        let address = self.get_register_pair(From) as usize;
+        self.LD_adress_to_reg8(To, address);
+    }
 
+    fn POP(&mut self, To: RegisterPair){
+        let value = (self.memory[(self.SP + 1) as usize] as u16) << 8 | self.memory[self.SP as usize] as u16;
+        self.set_register_pair(To, value);
+        self.SP += 2 ;
+    }
+
+    fn LD_reg8_to_adress(&mut self, To: usize, From: Register8){
+        self.memory[To] = self.get_register8(From);
+    }
+
+    fn LD_reg8_to_indirect_adress(&mut self, To: RegisterPair, From: Register8){
+        self.LD_reg8_to_adress(self.get_register_pair(To) as usize, From);
+    }
+
+    fn LD_value_to_indirect_adress(&mut self, To: RegisterPair, From: u8){
+        let adress = self.get_register_pair(To) as usize;
+        self.memory[adress] = From;
+    }
+
+    
 
 }
 
