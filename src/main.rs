@@ -1,3 +1,5 @@
+use std::result;
+
 const MEMORY_SIZE: usize = 65536;
 const ROM_BANK_0: usize = 0x0000;  // ROM Bank 0 (32KB)
 const ROM_BANK_1: usize = 0x4000;  // ROM Bank 1 (32KB)
@@ -33,7 +35,7 @@ struct CPU {
     PC: u16,        // Program counter (16bit)
     SP: u16,        // Stack pointer
     A: u8,          // Accumulator
-    F: u8,          // Flags register   
+    F: u8,          // Flags register. Los bits 0-3 estan a 0 y no se usan 
 
     // General purpose registers
     B: u8,
@@ -48,6 +50,14 @@ struct CPU {
     IR: u8, // Instruction register
     IE: u8, // Interrupt enable  
     memory: [u8; MEMORY_SIZE], // Memoria de la CPU
+    
+    /*
+    FLAGS: Bits 7-4 de F
+    
+    ZF:bool,    // Si es 0
+    NF:bool,    // Si es resta
+    HF:bool,    // Si hubo carry del bit 3 al 4 
+    CF:bool,    // Si hay acarreo fuera de rango */
 }
 
 impl CPU{
@@ -184,7 +194,47 @@ impl CPU{
         self.memory[adress] = From;
     }
 
+    fn update_flags(&mut self, zero: bool, carry:bool, half_carry:bool, substract:bool){
+        self.F = 0;
+        if zero {self.F |= 0b1000_0000;}
+        if substract {self.F |= 0b0100_0000;}
+        if half_carry {self.F |= 0b0010_0000;}
+        if carry {self.F |= 0b0001_0000;}
+    }
+
+    fn ADD(&mut self, num:u8){
+        let result = self.A as u16 + num as u16; 
+
+        self.update_flags(result == 0, result > 0xFF,(self.A & 0x0F) + (num & 0x0F) > 0x0F , false);
+        self.A = result as u8;
+    }
+
+    fn ADD_register8(&mut self, reg: Register8){
+        self.ADD(self.get_register8(reg));
+    }
+
+    fn ADD_indirect_adress(&mut self, reg: RegisterPair){
+        let adress = self.get_register_pair(reg) as usize;
+        self.ADD(self.memory[adress]);
+    }
     
+    fn SUB(&mut self, num:u8){
+        let result = self.A as u16 - num as u16;
+  
+        self.update_flags(result == 0, result > 0xFF, (self.A & 0x0F) < (num & 0x0F), true); 
+
+        self.A = result as u8;
+    }
+
+    fn SUB_register8(&mut self, reg: Register8){
+        self.SUB(self.get_register8(reg));
+    }
+
+    fn SUB_indirect_adress(&mut self, reg: RegisterPair){
+        let adress = self.get_register_pair(reg) as usize;
+        self.SUB(self.memory[adress]);
+    }
+
 
 }
 
