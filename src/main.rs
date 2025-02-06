@@ -10,6 +10,7 @@ const IO_REGISTERS: usize = 0xFF00; // IO Registros (80 bytes)
 const HIGH_RAM: usize = 0xFF80;    // Memoria de alto rendimiento (128 bytes)
 
 // Enum para los registros individuales
+#[derive(Copy, Clone)]
 enum Register8 {
     A,
     B,
@@ -19,18 +20,132 @@ enum Register8 {
     H,
     L,
 }
-
+#[derive(Copy, Clone)]
 enum Register16{
     PC,
     SP
 }
 
 // Enum para las parejas de registros
+#[derive(Copy, Clone)]
 enum RegisterPair {
     HL,
     DE,
     BC,
 }
+
+trait Operand<T>{
+    fn write(&self, cpu: &mut CPU, value: T);
+    fn read(&self, cpu: &CPU) -> T;
+}
+
+impl Operand<usize> for Register8{
+    fn read(&self, cpu: &CPU) -> usize {
+        panic!("No puedes leer un usize de un Reg8")
+    }
+
+    fn write(&self, cpu: &mut CPU, value: usize) {
+        cpu.set_register8(*self, cpu.memory[value]);
+    }
+}
+
+impl Operand<usize> for Register16{
+    fn read(&self, cpu: &CPU) -> usize {
+        panic!("No puedes leer un usize de un Reg")
+    }
+
+    fn write(&self, cpu: &mut CPU, value: usize) {
+        let result = (cpu.memory[value + 1] as u16) << 8 | cpu.memory[value] as u16;
+        cpu.set_register16(*self, result);
+    }
+}
+
+
+impl Operand<u8> for Register8{
+    fn read(&self, cpu: &CPU) -> u8 {
+        cpu.get_register8(*self)
+    }
+
+    fn write(&self, cpu: &mut CPU, value: u8) {
+        cpu.set_register8(*self, value);
+    }
+}
+
+
+impl Operand<Register8> for usize{
+    fn read(&self, cpu: &CPU) -> Register8 {
+        panic!("No puedes leer un Reg8 de un usize")
+    }
+
+    fn write(&self, cpu: &mut CPU, reg: Register8) {
+        cpu.memory[*self] = cpu.get_register8(reg);
+    }
+}
+
+impl Operand<Register8> for RegisterPair{
+    fn read(&self, cpu: &CPU) -> Register8 {
+        panic!("No puedes leer un Reg8 de un RegPair")
+    }
+
+    fn write(&self, cpu: &mut CPU, reg: Register8) {
+        cpu.memory[cpu.get_register_pair(*self) as usize] = cpu.get_register8(reg);
+    }
+}
+
+impl Operand<u8> for RegisterPair{
+    fn read(&self, cpu: &CPU) -> u8 {
+        panic!("No puedes leer un u8 de un RegPair")
+    }
+
+    fn write(&self, cpu: &mut CPU, value: u8) {
+        cpu.memory[cpu.get_register_pair(*self) as usize] = value;
+    }
+}
+
+impl Operand<RegisterPair> for Register8{
+    fn read(&self, cpu: &CPU) -> RegisterPair {
+        panic!("No puedes leer un RegisterPair de un Reg8")
+    }
+
+    fn write(&self, cpu: &mut CPU, pair: RegisterPair) {
+        cpu.set_register8(*self, cpu.memory[cpu.get_register_pair(pair) as usize]);
+    }
+}
+
+impl Operand<u16> for Register16{
+    fn read(&self, cpu: &CPU) -> u16 {
+        cpu.get_register16(*self)
+    }
+
+    fn write(&self, cpu: &mut CPU, value: u16) {
+        cpu.set_register16(*self, value);
+    }
+}
+
+impl Operand<Register8> for Register8{
+    fn read(&self, cpu: &CPU) -> Register8 {
+        panic!()
+    }
+
+    fn write(&self, cpu: &mut CPU, value: Register8) {
+        cpu.set_register8(*self, cpu.get_register8(value));
+    }
+}
+
+impl Operand<u16> for RegisterPair{
+    fn read(&self, cpu: &CPU) -> u16 {
+        cpu.get_register_pair(*self)
+    }
+
+    fn write(&self, cpu: &mut CPU, value: u16) {
+        cpu.set_register_pair(*self, value);
+    }
+}
+
+
+
+
+
 struct CPU {
     PC: u16,        // Program counter (16bit)
     SP: u16,        // Stack pointer
@@ -145,53 +260,15 @@ impl CPU{
         }
     }
 
-    fn LD_reg8_to_reg8(&mut self, To: Register8, From: Register8){
-        self.set_register8(To, self.get_register8(From));
-    }
-
-    fn LD_value_to_reg8(&mut self, To: Register8, From: u8){
-        self.set_register8(To, From);
-    }
-
-    fn LD_value_to_reg16(&mut self, To: Register16, From: u16){
-        self.set_register16(To, From);
-    }
-
-    fn LD_value_to_pair(&mut self, To: RegisterPair, From: u16){
-        self.set_register_pair(To, From);
-    }
-
-    fn LD_adress_to_reg8(&mut self, To: Register8, From: usize){
-        self.set_register8(To, self.memory[From]);
-    }
-
-    fn LD_adress_to_reg16(&mut self, To: Register16, From: usize){
-        let value = (self.memory[From + 1] as u16) << 8 | self.memory[From] as u16;
-        self.set_register16(To, value);
-    }
-
-    fn LD_indirect_adress_to_reg8(&mut self, To: Register8, From: RegisterPair){
-        let address = self.get_register_pair(From) as usize;
-        self.LD_adress_to_reg8(To, address);
-    }
+    fn LD<T>(&mut self, to: impl Operand<T>, from: impl Operand<T>){
+        let value = from.read(self);
+        to.write(self, value);
+    }  
 
     fn POP(&mut self, To: RegisterPair){
         let value = (self.memory[(self.SP + 1) as usize] as u16) << 8 | self.memory[self.SP as usize] as u16;
         self.set_register_pair(To, value);
         self.SP += 2 ;
-    }
-
-    fn LD_reg8_to_adress(&mut self, To: usize, From: Register8){
-        self.memory[To] = self.get_register8(From);
-    }
-
-    fn LD_reg8_to_indirect_adress(&mut self, To: RegisterPair, From: Register8){
-        self.LD_reg8_to_adress(self.get_register_pair(To) as usize, From);
-    }
-
-    fn LD_value_to_indirect_adress(&mut self, To: RegisterPair, From: u8){
-        let adress = self.get_register_pair(To) as usize;
-        self.memory[adress] = From;
     }
 
     fn update_flags(&mut self, zero: bool, carry:bool, half_carry:bool, substract:bool){
@@ -202,21 +279,14 @@ impl CPU{
         if carry {self.F |= 0b0001_0000;}
     }
 
-    fn ADD(&mut self, num:u8){
-        let result = self.A as u16 + num as u16; 
+    fn ADD<T>(&mut self, op: impl Operand<T>) where T: Into<u8> {
+        let num = op.read(self).into();
+        let result = self.A as u16 + num as u16;
 
         self.update_flags(result == 0, result > 0xFF,(self.A & 0x0F) + (num & 0x0F) > 0x0F , false);
         self.A = result as u8;
     }
 
-    fn ADD_register8(&mut self, reg: Register8){
-        self.ADD(self.get_register8(reg));
-    }
-
-    fn ADD_indirect_adress(&mut self, reg: RegisterPair){
-        let adress = self.get_register_pair(reg) as usize;
-        self.ADD(self.memory[adress]);
-    }
     
     fn SUB(&mut self, num:u8){
         let result = self.A as u16 - num as u16;
@@ -236,9 +306,8 @@ impl CPU{
     }
 
     fn ADC(&mut self, num: u8) {
-        self.ADD(num);
-
-        if (self.F & 0b0001_0000) != 0 {self.ADD(1);}
+        let carry:u8 = if (self.F & 0b0001_0000) != 0 { 1 } else { 0 };
+        //self.ADD(num + carry);
     }
 
     fn ADC_register8(&mut self, reg: Register8) {
@@ -251,9 +320,8 @@ impl CPU{
     }
 
     fn SBC(&mut self, num: u8){
-        self.SUB(num);
-
-        if (self.F & 0b0001_0000) != 0 {self.SUB(1);}
+        let carry:u8 = if (self.F & 0b0001_0000) != 0 { 1 } else { 0 };
+        self.SUB(num + carry);
     }
 
     fn SBC_register8(&mut self, reg: Register8) {
@@ -265,8 +333,36 @@ impl CPU{
         self.SBC(self.memory[adress]);
     }
 
-    fn AND(&mut self, num: u8){
-        
+    //TODO
+    fn AND(&mut self, num: u8){ 
+        self.A &= num;
+        self.update_flags(self.A == 0, false, true, false);
+    }
+
+    fn OR (&mut self, num: u8){
+        self.A |= num;
+        self.update_flags(self.A == 0, false, false, false);
+    }
+
+    fn XOR (&mut self, num: u8){
+        self.A ^= num;
+        self.update_flags(self.A == 0, false, false, false);
+    }
+
+    fn CP(&mut self, num:u8){
+        let result = self.A as u16 - num as u16;
+        self.update_flags(result == 0, result > 0xFF,(self.A & 0x0F) + (num & 0x0F) > 0x0F , false);
+    }
+
+    fn Inc(&mut self, reg: Register8){
+        let result = self.get_register8(reg) as u16 + 1;
+
+        self.update_flags(result == 0, false, (self.get_register8(reg) & 0x0F) + 1 > 0x0F, false);
+    }
+
+    fn DEC (&mut self, reg: Register8){
+        let result = self.get_register8(reg) as u16 - 1;
+        self.update_flags(result == 0, false, (self.get_register8(reg) & 0x0F) < 1, true);
     }
 
 }
