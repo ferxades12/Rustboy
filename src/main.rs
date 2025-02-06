@@ -315,32 +315,38 @@ impl CPU {
         self.A = result as u8;
     }
 
-    fn ADC(&mut self, num: u8) {
+    fn ADC<T>(&mut self, op: impl Operand<T>)
+    where
+        T: Into<u8>,
+    {
+        let num = op.read(self).into();
         let carry: u8 = if (self.F & 0b0001_0000) != 0 { 1 } else { 0 };
-        //self.ADD(num + carry);
+        let result = self.A as u16 + num as u16 + carry as u16;
+
+        self.update_flags(
+            result == 0,
+            result > 0xFF,
+            (self.A & 0x0F) + (num & 0x0F) + carry > 0x0F,
+            false,
+        );
+        self.A = result as u8;
     }
 
-    fn ADC_register8(&mut self, reg: Register8) {
-        self.ADC(self.get_register8(reg));
-    }
-
-    fn ADC_indirect_adress(&mut self, reg: RegisterPair) {
-        let adress = self.get_register_pair(reg) as usize;
-        self.ADC(self.memory[adress]);
-    }
-
-    fn SBC(&mut self, num: u8) {
+    fn SBC<T>(&mut self, op: impl Operand<T>)
+    where
+        T: Into<u8>,
+    {
+        let num = op.read(self).into();
         let carry: u8 = if (self.F & 0b0001_0000) != 0 { 1 } else { 0 };
-        self.SUB(num + carry);
-    }
+        let result = self.A as u16 - num as u16 - carry as u16;
 
-    fn SBC_register8(&mut self, reg: Register8) {
-        self.SBC(self.get_register8(reg));
-    }
-
-    fn SBC_indirect_adress(&mut self, reg: RegisterPair) {
-        let adress = self.get_register_pair(reg) as usize;
-        self.SBC(self.memory[adress]);
+        self.update_flags(
+            result == 0,
+            result > 0xFF,
+            (self.A & 0x0F) < (num & 0x0F) + carry,
+            true,
+        );
+        self.A = result as u8;
     }
 
     //TODO
