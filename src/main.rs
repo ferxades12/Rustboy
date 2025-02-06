@@ -435,12 +435,25 @@ impl CPU {
 
     fn RLC<T>(&mut self, op: impl Operand<u8>){
         let value = op.read(self);
-        let zero = value == 0;
-        let carry = value >> 7 & 1 != 0;
+        let seven = value >> 7 & 1 != 0;
 
-        let new_value = (value << 1) | (carry as u8);
+        let new_value = (value << 1) | (seven as u8);
         op.write(self, new_value);
-        self.update_flags(zero, carry, false, false);
+        self.update_flags(value == 0, seven, false, false);
+    }
+
+    fn RL<T>(&mut self, op: impl Operand<u8>){
+        let value = op.read(self);
+        let seven = value >> 7 & 1 != 0;
+        let carry = (self.F & 0b0001_0000) >> 4;
+
+        let new_value = (value << 1) | carry;
+        op.write(self, new_value);
+        self.update_flags(value == 0, seven, false, false);
+    }
+
+    fn RLA(&mut self){ // Mueve el bit 7 de a al carry y el carry al 0
+        self.RL::<u8>(Register8::A);
     }
 
 }
