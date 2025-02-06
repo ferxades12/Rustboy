@@ -33,8 +33,10 @@ enum RegisterPair {
     DE,
     BC,
 }
-
-trait Operand<T> {
+trait AllowedTypes: Into<u16> + Copy {}
+impl AllowedTypes for u8 {}
+impl AllowedTypes for u16 {}
+trait Operand<T: AllowedTypes> {
     fn write(&self, cpu: &mut CPU, value: T);
     fn read(&self, cpu: &CPU) -> T;
 }
@@ -89,6 +91,16 @@ impl Operand<u16> for u16 {
     }
 }
 
+impl Operand<u8> for RegisterPair {
+    fn read(&self, _cpu: &CPU) -> u8 {
+        panic!("No puedes leer un u8 de un RegPair")
+    }
+
+    fn write(&self, cpu: &mut CPU, value: u8) {
+        cpu.memory[cpu.get_register_pair(*self) as usize] = value;
+    }
+}
+
 /*
 impl Operand<usize> for Register8 {
     fn read(&self, _cpu: &CPU) -> usize {
@@ -139,16 +151,6 @@ impl Operand<Register8> for RegisterPair {
 
     fn write(&self, cpu: &mut CPU, reg: Register8) {
         cpu.memory[cpu.get_register_pair(*self) as usize] = cpu.get_register8(reg);
-    }
-}
-
-impl Operand<u8> for RegisterPair {
-    fn read(&self, _cpu: &CPU) -> u8 {
-        panic!("No puedes leer un u8 de un RegPair")
-    }
-
-    fn write(&self, cpu: &mut CPU, value: u8) {
-        cpu.memory[cpu.get_register_pair(*self) as usize] = value;
     }
 }
 
@@ -288,7 +290,7 @@ impl CPU {
         }
     }
 
-    fn LD<T>(&mut self, to: impl Operand<T>, from: impl Operand<T>) {
+    fn LD<T:AllowedTypes>(&mut self, to: impl Operand<T>, from: impl Operand<T>) {
         let value = from.read(self);
         to.write(self, value);
     }
@@ -316,11 +318,8 @@ impl CPU {
         }
     }
 
-    fn ADD<T>(&mut self, op: impl Operand<T>)
-    where
-        T: Into<u8>,
-    {
-        let num = op.read(self).into();
+    fn ADD<T>(&mut self, op: impl Operand<u8>){
+        let num: u8 = op.read(self).into();
         let result = self.A as u16 + num as u16;
 
         self.update_flags(
@@ -332,11 +331,9 @@ impl CPU {
         self.A = result as u8;
     }
 
-    fn SUB<T>(&mut self, op: impl Operand<T>)
-    where
-        T: Into<u8>,
+    fn SUB<T>(&mut self, op: impl Operand<u8>)
     {
-        let num = op.read(self).into();
+        let num:u8 = op.read(self).into();
         let result = self.A as u16 - num as u16;
 
         self.update_flags(
@@ -349,11 +346,9 @@ impl CPU {
         self.A = result as u8;
     }
 
-    fn ADC<T>(&mut self, op: impl Operand<T>)
-    where
-        T: Into<u8>,
+    fn ADC<T>(&mut self, op: impl Operand<u8>)
     {
-        let num = op.read(self).into();
+        let num:u8 = op.read(self).into();
         let carry: u8 = if (self.F & 0b0001_0000) != 0 { 1 } else { 0 };
         let result = self.A as u16 + num as u16 + carry as u16;
 
@@ -366,11 +361,9 @@ impl CPU {
         self.A = result as u8;
     }
 
-    fn SBC<T>(&mut self, op: impl Operand<T>)
-    where
-        T: Into<u8>,
+    fn SBC<T>(&mut self, op: impl Operand<u8>)
     {
-        let num = op.read(self).into();
+        let num:u8 = op.read(self).into();
         let carry: u8 = if (self.F & 0b0001_0000) != 0 { 1 } else { 0 };
         let result = self.A as u16 - num as u16 - carry as u16;
 
@@ -383,52 +376,73 @@ impl CPU {
         self.A = result as u8;
     }
 
-    //TODO
-    fn AND(&mut self, num: u8) {
-        self.A &= num;
+    fn AND<T:AllowedTypes>(&mut self, op: impl Operand<u8>) {
+        self.A &= op.read(self);
         self.update_flags(self.A == 0, false, true, false);
     }
 
-    fn OR(&mut self, num: u8) {
-        self.A |= num;
+    fn OR(&mut self, op: impl Operand<u8>) {
+        self.A |= op.read(self);
         self.update_flags(self.A == 0, false, false, false);
     }
 
-    fn XOR(&mut self, num: u8) {
-        self.A ^= num;
+    fn XOR(&mut self, op: impl Operand<u8>) {
+        self.A ^= op.read(self);
         self.update_flags(self.A == 0, false, false, false);
     }
 
-    fn CP(&mut self, num: u8) {
-        let result = self.A as u16 - num as u16;
+    fn CP(&mut self, op: impl Operand<u8>) { // Compara. Comprueba la resta pero no guarda el resultado
+        let result = self.A as u16 - op.read(self) as u16;
         self.update_flags(
             result == 0,
             result > 0xFF,
-            (self.A & 0x0F) + (num & 0x0F) > 0x0F,
+            (self.A & 0x0F) + (op.read(self) & 0x0F) > 0x0F,
             false,
         );
     }
 
-    fn Inc(&mut self, reg: Register8) {
-        let result = self.get_register8(reg) as u16 + 1;
+    fn Inc<T>(&mut self, op: impl Operand<u8>) {
+        let value = op.read(self);
+        let result = value as u16 + 1;
 
         self.update_flags(
-            result == 0,
+            result as u8 == 0,
             false,
-            (self.get_register8(reg) & 0x0F) + 1 > 0x0F,
+            (value & 0x0F) + 1 > 0x0F,
             false,
         );
+
+        op.write(self, result as u8);
     }
 
-    fn DEC(&mut self, reg: Register8) {
-        let result = self.get_register8(reg) as u16 - 1;
+    fn DEC<T>(&mut self, op: impl Operand<u8>) {
+        let value = op.read(self);
+        let result = value as u16 - 1;
+
         self.update_flags(
-            result == 0,
+            result as u8 == 0,
             false,
-            (self.get_register8(reg) & 0x0F) < 1,
-            true,
+            (value & 0x0F) + 1 > 0x0F,
+            false,
         );
+
+        op.write(self, result as u8);
     }
+
+    fn RLCA(&mut self){ // Mueve el bit 7 de A al bit 0 y al bit de carry
+        self.RLC::<u8>(Register8::A);
+    }
+
+    fn RLC<T>(&mut self, op: impl Operand<u8>){
+        let value = op.read(self);
+        let zero = value == 0;
+        let carry = value >> 7 & 1 != 0;
+
+        let new_value = (value << 1) | (carry as u8);
+        op.write(self, new_value);
+        self.update_flags(zero, carry, false, false);
+    }
+
 }
 
 fn main() {
