@@ -39,24 +39,13 @@ trait Operand<T> {
     fn read(&self, cpu: &CPU) -> T;
 }
 
-impl Operand<usize> for Register8 {
-    fn read(&self, cpu: &CPU) -> usize {
-        panic!("No puedes leer un usize de un Reg8")
+impl Operand<u8> for u8{
+    fn read(&self, _cpu: &CPU) -> u8 {
+        *self
     }
 
-    fn write(&self, cpu: &mut CPU, value: usize) {
-        cpu.set_register8(*self, cpu.memory[value]);
-    }
-}
-
-impl Operand<usize> for Register16 {
-    fn read(&self, cpu: &CPU) -> usize {
-        panic!("No puedes leer un usize de un Reg")
-    }
-
-    fn write(&self, cpu: &mut CPU, value: usize) {
-        let result = (cpu.memory[value + 1] as u16) << 8 | cpu.memory[value] as u16;
-        cpu.set_register16(*self, result);
+    fn write(&self, _cpu: &mut CPU, _value: u8) {
+        panic!("No puedes escribir en un u8")
     }
 }
 
@@ -70,6 +59,68 @@ impl Operand<u8> for Register8 {
     }
 }
 
+impl Operand<u8> for usize {
+    fn read(&self, cpu: &CPU) -> u8 {
+        cpu.memory[*self]
+    }
+
+    fn write(&self, cpu: &mut CPU, value: u8) {
+        cpu.memory[*self] = value;
+    }
+}
+
+impl Operand<u16> for Register16 {
+    fn read(&self, cpu: &CPU) -> u16 {
+        cpu.get_register16(*self)
+    }
+
+    fn write(&self, cpu: &mut CPU, value: u16) {
+        cpu.set_register16(*self, value);
+    }
+}
+
+impl Operand<u16> for u16 {
+    fn read(&self, _cpu: &CPU) -> u16 {
+        *self
+    }
+
+    fn write(&self, _cpu: &mut CPU, _value: u16) {
+        panic!("No puedes escribir en un u16")
+    }
+}
+
+/*
+impl Operand<usize> for Register8 {
+    fn read(&self, _cpu: &CPU) -> usize {
+        panic!("No puedes leer un usize de un Reg8")
+    }
+
+    fn write(&self, cpu: &mut CPU, value: usize) {
+        cpu.set_register8(*self, cpu.memory[value]);
+    }
+}
+
+impl Operand<Register8> for Register8 {
+    fn read(&self, _cpu: &CPU) -> Register8 {
+        *self
+    }
+
+    fn write(&self, cpu: &mut CPU, value: Register8) {
+        cpu.set_register8(*self, cpu.get_register8(value));
+    }
+}
+
+
+impl Operand<RegisterPair> for Register8 {
+    fn read(&self, _cpu: &CPU) -> RegisterPair {
+        panic!("No puedes leer un RegisterPair de un Reg8")
+    }
+
+    fn write(&self, cpu: &mut CPU, pair: RegisterPair) {
+        cpu.set_register8(*self, cpu.memory[cpu.get_register_pair(pair) as usize]);
+    }
+}
+
 impl Operand<Register8> for usize {
     fn read(&self, _cpu: &CPU) -> Register8 {
         panic!("No puedes leer un Reg8 de un usize")
@@ -79,6 +130,7 @@ impl Operand<Register8> for usize {
         cpu.memory[*self] = cpu.get_register8(reg);
     }
 }
+
 
 impl Operand<Register8> for RegisterPair {
     fn read(&self, _cpu: &CPU) -> Register8 {
@@ -100,33 +152,14 @@ impl Operand<u8> for RegisterPair {
     }
 }
 
-impl Operand<RegisterPair> for Register8 {
-    fn read(&self, _cpu: &CPU) -> RegisterPair {
-        panic!("No puedes leer un RegisterPair de un Reg8")
+impl Operand<usize> for Register16 {
+    fn read(&self, _cpu: &CPU) -> usize {
+        panic!("No puedes leer un usize de un Reg")
     }
 
-    fn write(&self, cpu: &mut CPU, pair: RegisterPair) {
-        cpu.set_register8(*self, cpu.memory[cpu.get_register_pair(pair) as usize]);
-    }
-}
-
-impl Operand<u16> for Register16 {
-    fn read(&self, cpu: &CPU) -> u16 {
-        cpu.get_register16(*self)
-    }
-
-    fn write(&self, cpu: &mut CPU, value: u16) {
-        cpu.set_register16(*self, value);
-    }
-}
-
-impl Operand<Register8> for Register8 {
-    fn read(&self, _cpu: &CPU) -> Register8 {
-        panic!()
-    }
-
-    fn write(&self, cpu: &mut CPU, value: Register8) {
-        cpu.set_register8(*self, cpu.get_register8(value));
+    fn write(&self, cpu: &mut CPU, value: usize) {
+        let result = (cpu.memory[value + 1] as u16) << 8 | cpu.memory[value] as u16;
+        cpu.set_register16(*self, result);
     }
 }
 
@@ -138,7 +171,8 @@ impl Operand<u16> for RegisterPair {
     fn write(&self, cpu: &mut CPU, value: u16) {
         cpu.set_register_pair(*self, value);
     }
-}
+} 
+*/
 
 struct CPU {
     PC: u16, // Program counter (16bit)
