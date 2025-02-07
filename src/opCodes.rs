@@ -42,6 +42,38 @@ fn execute_opcode(cpu: &mut CPU){
         0x0B => { // DEC BC
             cpu.DEC::<u16>(RegisterPair::BC);
         },
+        0x0C => { // INC C
+            cpu.INC::<u8>(Register8::C);
+        },
+        0x0D => { // DEC C
+            cpu.DEC::<u8>(Register8::C);
+        },
+        0x0E => { // LD C, u8
+            let value = cpu.fetch_byte();
+            cpu.LD(Register8::C, value);
+        },
+        0x0F => { // RRCA
+            //cpu.RRCA();
+        },
+        0x10 => { // STOP
+            //cpu.STOP();
+        },
+        0x11 => { // LD DE, u16
+            let value = cpu.fetch_word();
+            cpu.LD(RegisterPair::DE, value);
+        },
+        0x12 => { // LD (DE), A
+            cpu.LD::<u8>(RegisterPair::DE, cpu.A);
+        },
+        0x13 => { // INC DE
+            cpu.INC::<u16>(RegisterPair::DE);
+        },
+        0x14 => { // INC D
+            cpu.INC::<u8>(Register8::D);
+        },
+        0x15 => { // DEC D
+            cpu.DEC::<u8>(Register8::D);
+        },
         _ => panic!("Unknown opcode: 0x{:X}", opcode),
     }
 }
