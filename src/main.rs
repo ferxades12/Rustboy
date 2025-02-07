@@ -65,6 +65,16 @@ impl Operand<u8> for Register8 {
     }
 }
 
+impl Operand<u16> for Register8 {
+    fn read(&self, cpu: &CPU) -> u16 {
+       cpu.get_register8(*self) as u16
+    }
+
+    fn write(&self, cpu: &mut CPU, value: u16) {
+        cpu.set_register8(*self, value as u8);
+    }
+}
+
 impl Operand<u8> for usize {
     fn read(&self, cpu: &CPU) -> u8 {
         cpu.memory[*self]
@@ -155,6 +165,12 @@ pub struct CPU {
             CF:bool,    // Si hay acarreo fuera de rango */
 }
 
+
+/*
+LD es genérico ya que no tienes que justificar que el tipo T cumpla nada (sumar, restar, bitwise, etc)
+Los que trabajan con u16 son los que pueden recibir de input u8 o u16. El trait Operand se encarga de hacer la conversión
+Los que trabajan con <u8> es porque unicamente se aplican a A o un registro de 8 bits, no a uno cualquiera como los de arriba
+*/
 impl CPU {
     fn new() -> CPU {
 
@@ -324,7 +340,7 @@ impl CPU {
         result
     }
 
-    fn AND<T>(&mut self, op: impl Operand<u8>) {
+    fn AND(&mut self, op: impl Operand<u8>) {
         self.A &= op.read(self);
         self.update_flags(self.A == 0, false, true, false);
     }
@@ -349,10 +365,9 @@ impl CPU {
         );
     }
 
-    fn INC<T>(&mut self, op: impl Operand<u8>) {
+    fn INC(&mut self, op: impl Operand<u16>) -> u16 {
         let value = op.read(self);
-        let result = value as u16 + 1;
-
+        let result = value.wrapping_add(1);
         self.update_flags(
             result as u8 == 0,
             false,
@@ -360,21 +375,20 @@ impl CPU {
             false,
         );
 
-        op.write(self, result as u8);
+        result
     }
 
-    fn DEC<T>(&mut self, op: impl Operand<u8>) {
+    fn DEC(&mut self, op: impl Operand<u16>) -> u16 {
         let value = op.read(self);
-        let result = value as u16 - 1;
-
+        let result = value.wrapping_sub(1);
         self.update_flags(
             result as u8 == 0,
             false,
-            (value & 0x0F) + 1 > 0x0F,
-            false,
+            (value & 0x0F) < 1,
+            true,
         );
 
-        op.write(self, result as u8);
+        result
     }
 
     fn RLCA(&mut self){ // Mueve el bit 7 de A al bit 0 y al bit de carry

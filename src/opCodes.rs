@@ -13,13 +13,13 @@ fn execute_opcode(cpu: &mut CPU){
             cpu.LD(RegisterPair::BC, cpu.A);
         },
         0x03 => { // INC BC
-            cpu.INC::<u16>(RegisterPair::BC);
+            cpu.INC(RegisterPair::BC);
         },
         0x04 => { // INC B
-            cpu.INC::<u8>(Register8::B);
+            cpu.INC(Register8::B);
         },
         0x05 => { // DEC B
-            cpu.DEC::<u8>(Register8::B);
+            cpu.DEC(Register8::B);
         },
         0x06 => { // LD B, u8
             let value = cpu.fetch_byte();
@@ -40,13 +40,13 @@ fn execute_opcode(cpu: &mut CPU){
             cpu.LD(Register8::A, RegisterPair::BC);
         },
         0x0B => { // DEC BC
-            cpu.DEC::<u16>(RegisterPair::BC);
+            cpu.DEC(RegisterPair::BC);
         },
         0x0C => { // INC C
-            cpu.INC::<u8>(Register8::C);
+            cpu.INC(Register8::C);
         },
         0x0D => { // DEC C
-            cpu.DEC::<u8>(Register8::C);
+            cpu.DEC(Register8::C);
         },
         0x0E => { // LD C, u8
             let value = cpu.fetch_byte();
@@ -66,13 +66,13 @@ fn execute_opcode(cpu: &mut CPU){
             cpu.LD::<u8>(RegisterPair::DE, cpu.A);
         },
         0x13 => { // INC DE
-            cpu.INC::<u16>(RegisterPair::DE);
+            cpu.INC(RegisterPair::DE);
         },
         0x14 => { // INC D
-            cpu.INC::<u8>(Register8::D);
+            cpu.INC(Register8::D);
         },
         0x15 => { // DEC D
-            cpu.DEC::<u8>(Register8::D);
+            cpu.DEC(Register8::D);
         },
         _ => panic!("Unknown opcode: 0x{:X}", opcode),
     }
