@@ -1,13 +1,17 @@
-use std::result;
+mod opCodes;
+
 
 const MEMORY_SIZE: usize = 65536;
-const ROM_BANK_0: usize = 0x0000; // ROM Bank 0 (32KB)
+const ROM_BANK_0: usize = 0x0000; // ROM Bank 0 (32KB) HOME BANK
 const ROM_BANK_1: usize = 0x4000; // ROM Bank 1 (32KB)
-const VRAM: usize = 0x8000; // VRAM (8KB)
-const RAM_BANK_0: usize = 0xC000; // RAM Bank 0 (8KB)
-const OAM: usize = 0xFE00; // OAM (Sprites) (160 bytes)
+const VRAM: usize = 0x8000; // VRAM (8KB) Background tiles
+const CARTRIDGE_RAM:usize = 0xA000;
+const WORK_RAM: usize = 0xC000; // RAM Bank 0 (8KB)
+// Space not used
+const OAM: usize = 0xFE00; // OAM (Sprites) (160 bytes) also tiles
+//Space not used
 const IO_REGISTERS: usize = 0xFF00; // IO Registros (80 bytes)
-const HIGH_RAM: usize = 0xFF80; // Memoria de alto rendimiento (128 bytes)
+const HIGH_RAM: usize = 0xFF80; // Memoria de alto rendimiento (128 bytes) //Acceso un ciclo mas rapido
 
 // Enum para los registros individuales
 #[derive(Copy, Clone)]
@@ -101,6 +105,16 @@ impl Operand<u8> for RegisterPair {
     }
 }
 
+impl Operand<u16> for RegisterPair {
+    fn read(&self, cpu: &CPU) -> u16 {
+        cpu.get_register_pair(*self)
+    }
+
+    fn write(&self, cpu: &mut CPU, value: u16) {
+        cpu.set_register_pair(*self, value);
+    }
+} 
+
 /*
 impl Operand<usize> for Register8 {
     fn read(&self, _cpu: &CPU) -> usize {
@@ -164,19 +178,9 @@ impl Operand<usize> for Register16 {
         cpu.set_register16(*self, result);
     }
 }
-
-impl Operand<u16> for RegisterPair {
-    fn read(&self, cpu: &CPU) -> u16 {
-        cpu.get_register_pair(*self)
-    }
-
-    fn write(&self, cpu: &mut CPU, value: u16) {
-        cpu.set_register_pair(*self, value);
-    }
-} 
 */
 
-struct CPU {
+pub struct CPU {
     PC: u16, // Program counter (16bit)
     SP: u16, // Stack pointer
     A: u8,   // Accumulator
@@ -207,6 +211,7 @@ struct CPU {
 
 impl CPU {
     fn new() -> CPU {
+
         CPU {
             PC: 0100,
             SP: 0,
@@ -220,10 +225,13 @@ impl CPU {
             IR: 0,
             IE: 0,
             F: 0,
-            memory: [0; MEMORY_SIZE], // Inicializa la memoria a cero
+            memory: [0; MEMORY_SIZE], // Inicializa la memoria a ceros
         }
     }
 
+    fn NOP(&mut self) {
+        // No hace nada
+    }
     // Accede a un registro individual
     fn get_register8(&self, reg: Register8) -> u8 {
         match reg {
@@ -454,6 +462,18 @@ impl CPU {
 
     fn RLA(&mut self){ // Mueve el bit 7 de a al carry y el carry al 0
         self.RL::<u8>(Register8::A);
+    }
+
+    fn fetch_byte(&mut self)-> u8{
+        let op = self.memory[self.PC as usize];
+        self.PC += 1;
+        op
+    }
+
+    fn fetch_word(&mut self)-> u16{
+        let op = (self.memory[self.PC as usize] as u16) | ((self.memory[(self.PC + 1) as usize] as u16) << 8);
+        self.PC += 2;
+        op
     }
 
 }
