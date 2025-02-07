@@ -1,4 +1,5 @@
-use crate::{Operand, Register16, Register8, RegisterPair, CPU};
+
+use crate::{CPU};
 
 
 fn execute_opcode(cpu: &mut CPU){
@@ -7,50 +8,55 @@ fn execute_opcode(cpu: &mut CPU){
         0x00 => {},
         0x01 => { // LD BC, u16
             let value = cpu.fetch_word();
-            cpu.LD(RegisterPair::BC, value);
+            cpu.set_bc(value);
         },
         0x02 => { // LD (BC), A
-            cpu.LD::<u8>(RegisterPair::BC, Register8::A);
+            cpu.memory[cpu.get_bc() as usize] = cpu.registers.A;
         },
         0x03 => { // INC BC
-            cpu.INC(RegisterPair::BC);
+            let value = cpu.get_bc().wrapping_add(1);
+            cpu.set_bc(value);
         },
         0x04 => { // INC B
-            cpu.INC(Register8::B);
+            cpu.registers.B = cpu.INC(cpu.registers.B);
         },
         0x05 => { // DEC B
-            cpu.DEC(Register8::B);
+            cpu.registers.B = cpu.DEC(cpu.registers.B);
         },
         0x06 => { // LD B, u8
             let value = cpu.fetch_byte();
-            cpu.LD(Register8::B, value);
+            cpu.registers.B = value;
         },
         0x07 => { // RLCA
             cpu.RLCA();
         },
         0x08 => { // LD (u16), SP
             let word = cpu.fetch_word();
-            cpu.LD(word, Register16::SP);
+            let low = word as u8;
+            let high = (word >> 8) as u8;
+            cpu.memory[word as usize] = low;
+            cpu.memory[(word + 1) as usize] = high;
         },
         0x09 => { // ADD HL, BC
-            let result = cpu.ADD(cpu.get_register_pair(RegisterPair::HL), cpu.get_register_pair(RegisterPair::BC));
-            cpu.set_register_pair(RegisterPair::HL, result);
+            let result = cpu.ADD(cpu.get_hl(), cpu.get_bc());
+            cpu.set_hl(result);
         },
         0x0A => { // LD A, (BC)
-            cpu.LD::<u8>(Register8::A, RegisterPair::BC);
+            cpu.registers.A = cpu.memory[cpu.get_bc() as usize];
         },
         0x0B => { // DEC BC
-            cpu.DEC(RegisterPair::BC);
+            let value = cpu.get_bc().wrapping_sub(1);
+            cpu.set_bc(value);
         },
         0x0C => { // INC C
-            cpu.INC(Register8::C);
+            cpu.registers.C = cpu.INC(cpu.registers.C);
         },
         0x0D => { // DEC C
-            cpu.DEC(Register8::C);
+            cpu.registers.C = cpu.DEC(cpu.registers.C);
         },
         0x0E => { // LD C, u8
             let value = cpu.fetch_byte();
-            cpu.LD(Register8::C, value);
+            cpu.registers.C = value;
         },
         0x0F => { // RRCA
             //cpu.RRCA();
@@ -60,23 +66,24 @@ fn execute_opcode(cpu: &mut CPU){
         },
         0x11 => { // LD DE, u16
             let value = cpu.fetch_word();
-            cpu.LD(RegisterPair::DE, value);
+            cpu.set_de(value);
         },
         0x12 => { // LD (DE), A
-            cpu.LD::<u8>(RegisterPair::DE, cpu.A);
+            cpu.memory[cpu.get_de() as usize] = cpu.registers.A;
         },
         0x13 => { // INC DE
-            cpu.INC(RegisterPair::DE);
+            let value = cpu.get_de().wrapping_add(1);
+            cpu.set_de(value);
         },
         0x14 => { // INC D
-            cpu.INC(Register8::D);
+            cpu.registers.D = cpu.INC(cpu.registers.D);
         },
         0x15 => { // DEC D
-            cpu.DEC(Register8::D);
+            cpu.registers.D = cpu.DEC(cpu.registers.D);
         },
         0x16 => { // LD D, u8
             let value = cpu.fetch_byte();
-            cpu.LD(Register8::D, value);
+            cpu.registers.D = value;
         },
         0x17 => { // RLA
             cpu.RLA();
@@ -86,24 +93,25 @@ fn execute_opcode(cpu: &mut CPU){
             //cpu.JR(value);
         },
         0x19 => { // ADD HL, DE
-            let result = cpu.ADD(cpu.get_register_pair(RegisterPair::HL), cpu.get_register_pair(RegisterPair::DE));
-            cpu.set_register_pair(RegisterPair::HL, result);
+            let result = cpu.ADD(cpu.get_hl(), cpu.get_de());
+            cpu.set_hl(result);
         },
         0x1A => { // LD A, (DE)
-            cpu.LD::<u8>(Register8::A, RegisterPair::DE);
+            cpu.registers.A = cpu.memory[cpu.get_de() as usize];
         },
         0x1B => { // DEC DE
-            cpu.DEC(RegisterPair::DE);
+            let value = cpu.get_de().wrapping_sub(1);
+            cpu.set_de(value);
         },
         0x1C => { // INC E
-            cpu.INC(Register8::E);
+            cpu.registers.E = cpu.INC(cpu.registers.E);
         },
         0x1D => { // DEC E
-            cpu.DEC(Register8::E);
+            cpu.registers.E = cpu.DEC(cpu.registers.E);
         },
         0x1E => { // LD E, u8
             let value = cpu.fetch_byte();
-            cpu.LD(Register8::E, value);
+            cpu.registers.E = value;
         },
         0x1F => { // RRA
             //cpu.RRA();
@@ -114,24 +122,26 @@ fn execute_opcode(cpu: &mut CPU){
         },
         0x21 => { // LD HL, u16
             let value = cpu.fetch_word();
-            cpu.LD(RegisterPair::HL, value);
+            cpu.set_hl(value);
         },
         0x22 => { // LD (HL+), A
-            cpu.LD::<u8>(RegisterPair::HL, Register8::A);
-            cpu.INC(RegisterPair::HL);
+            let hl = cpu.get_hl();
+            cpu.memory[hl as usize] = cpu.registers.A;
+            cpu.set_hl(hl.wrapping_add(1));
         },
         0x23 => { // INC HL
-            cpu.INC(RegisterPair::HL);
+            let value = cpu.get_hl().wrapping_add(1);
+            cpu.set_hl(value);
         },
         0x24 => { // INC H
-            cpu.INC(Register8::H);
+            cpu.registers.H = cpu.INC(cpu.registers.H);
         },
         0x25 => { // DEC H
-            cpu.DEC(Register8::H);
+            cpu.registers.H = cpu.DEC(cpu.registers.H);
         },
         0x26 => { // LD H, u8
             let value = cpu.fetch_byte();
-            cpu.LD(Register8::H, value);
+            cpu.registers.H = value;
         },
         0x27 => { // DAA
             //cpu.DAA();
@@ -141,25 +151,27 @@ fn execute_opcode(cpu: &mut CPU){
             //cpu.JR_Z(value);
         },
         0x29 => { // ADD HL, HL
-            let result = cpu.ADD(cpu.get_register_pair(RegisterPair::HL), cpu.get_register_pair(RegisterPair::HL));
-            cpu.set_register_pair(RegisterPair::HL, result);
+            let result = cpu.ADD(cpu.get_hl(), cpu.get_hl());
+            cpu.set_hl(result);
         },
         0x2A => { // LD A, (HL+)
-            cpu.LD::<u8>(Register8::A, RegisterPair::HL);
-            cpu.INC(RegisterPair::HL);
+            let hl = cpu.get_hl();
+            cpu.registers.A = cpu.memory[hl as usize];
+            cpu.set_hl(hl.wrapping_add(1));
         },
         0x2B => { // DEC HL
-            cpu.DEC(RegisterPair::HL);
+            let value = cpu.get_hl().wrapping_sub(1);
+            cpu.set_hl(value);
         },
         0x2C => { // INC L
-            cpu.INC(Register8::L);
+            cpu.registers.L = cpu.INC(cpu.registers.L);
         },
         0x2D => { // DEC L
-            cpu.DEC(Register8::L);
+            cpu.registers.L = cpu.DEC(cpu.registers.L);
         },
         0x2E => { // LD L, u8
             let value = cpu.fetch_byte();
-            cpu.LD(Register8::L, value);
+            cpu.registers.L = value;
         },
         0x2F => { // CPL
             //cpu.CPL();
@@ -170,7 +182,26 @@ fn execute_opcode(cpu: &mut CPU){
         },
         0x31 => { // LD SP, u16
             let value = cpu.fetch_word();
-            cpu.LD(Register16::SP, value);
+            cpu.registers.SP = value;
+        },
+        0x32 => { // LD (HL-), A
+            let hl = cpu.get_hl();
+            cpu.memory[hl as usize] = cpu.registers.A;
+            cpu.set_hl(hl.wrapping_sub(1));
+        },
+        0x33 => { // INC SP
+            let value = cpu.registers.SP.wrapping_add(1);
+            cpu.registers.SP = value;
+        },
+        0x34 => { // INC (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.INC(value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0x35 => { // DEC (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.DEC(value);
+            cpu.memory[cpu.get_hl() as usize] = result;
         },
         _ => panic!("Unknown opcode: 0x{:X}", opcode),
     }
