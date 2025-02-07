@@ -117,8 +117,8 @@ impl Operand<u16> for u16 {
 }
 
 impl Operand<u8> for RegisterPair {
-    fn read(&self, _cpu: &CPU) -> u8 {
-        panic!("No puedes leer un u8 de un RegPair")
+    fn read(&self, cpu: &CPU) -> u8 {
+        cpu.memory[cpu.get_register_pair(*self) as usize]
     }
 
     fn write(&self, cpu: &mut CPU, value: u8) {
