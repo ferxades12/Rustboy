@@ -149,14 +149,20 @@ impl CPU {
         }
     }
 
-    fn ADD(&mut self, n1: u16, n2: u16) -> u16 {
+    fn ADD16(&mut self, n1: u16, n2: u16) -> u16 {
         let (result, carry) = n1.overflowing_add(n2);
         self.update_flags(
-            result == 0,
+            self.get_ZF(),
             carry,
             (n1 & 0x0FFF) + (n2 & 0x0FFF) > 0x0FFF,
             false,
         );
+        result
+    }
+
+    fn ADD8(&mut self, n1: u8, n2: u8) -> u8 {
+        let (result, carry) = n1.overflowing_add(n2);
+        self.update_flags(result == 0, carry, (n1 & 0x0F) + (n2 & 0x0F) > 0x0F, false);
         result
     }
 

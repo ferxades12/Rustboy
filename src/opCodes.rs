@@ -38,10 +38,8 @@ fn execute_opcode(cpu: &mut CPU){
             cpu.memory[(word + 1) as usize] = high;
         },
         0x09 => { // ADD HL, BC
-            let zf = cpu.get_ZF();
-            let result = cpu.ADD(cpu.get_hl(), cpu.get_bc());
+            let result = cpu.ADD16(cpu.get_hl(), cpu.get_bc());
             cpu.set_hl(result);
-            cpu.set_ZF(zf);
         },
         0x0A => { // LD A, (BC)
             cpu.registers.A = cpu.memory[cpu.get_bc() as usize];
@@ -95,10 +93,8 @@ fn execute_opcode(cpu: &mut CPU){
             //cpu.JR(value);
         },
         0x19 => { // ADD HL, DE
-            let zf = cpu.get_ZF();
-            let result = cpu.ADD(cpu.get_hl(), cpu.get_de());
+            let result = cpu.ADD16(cpu.get_hl(), cpu.get_de());
             cpu.set_hl(result);
-            cpu.set_ZF(zf);
         },
         0x1A => { // LD A, (DE)
             cpu.registers.A = cpu.memory[cpu.get_de() as usize];
@@ -155,10 +151,8 @@ fn execute_opcode(cpu: &mut CPU){
             //cpu.JR_Z(value);
         },
         0x29 => { // ADD HL, HL
-            let zf = cpu.get_ZF();
-            let result = cpu.ADD(cpu.get_hl(), cpu.get_hl());
+            let result = cpu.ADD16(cpu.get_hl(), cpu.get_hl());
             cpu.set_hl(result);
-            cpu.set_ZF(zf);
         },
         0x2A => { // LD A, (HL+)
             let hl = cpu.get_hl();
@@ -222,7 +216,7 @@ fn execute_opcode(cpu: &mut CPU){
         },
         0x39 => { // ADD HL, SP
             let zf = cpu.get_ZF();
-            let result = cpu.ADD(cpu.get_hl(), cpu.registers.SP);
+            let result = cpu.ADD16(cpu.get_hl(), cpu.registers.SP);
             cpu.set_hl(result);
             cpu.set_ZF(zf);
         },
@@ -441,26 +435,26 @@ fn execute_opcode(cpu: &mut CPU){
             cpu.registers.A = cpu.registers.A;
         },
         0x80 => { // ADD A, B
-            cpu.registers.A = cpu.ADD(cpu.registers.A as u16, cpu.registers.B as u16) as u8;
+            cpu.registers.A = cpu.ADD8(cpu.registers.A, cpu.registers.B);
         },
         0x81 => { // ADD A, C
-            cpu.registers.A = cpu.ADD(cpu.registers.A as u16, cpu.registers.C as u16) as u8;
+            cpu.registers.A = cpu.ADD8(cpu.registers.A, cpu.registers.C);
         },
         0x82 => { // ADD A, D
-            cpu.registers.A = cpu.ADD(cpu.registers.A as u16, cpu.registers.D as u16) as u8;
+            cpu.registers.A = cpu.ADD8(cpu.registers.A, cpu.registers.D);
         },
         0x83 => { // ADD A, E
-            cpu.registers.A = cpu.ADD(cpu.registers.A as u16, cpu.registers.E as u16) as u8;
+            cpu.registers.A = cpu.ADD8(cpu.registers.A, cpu.registers.E);
         },
         0x84 => { // ADD A, H
-            cpu.registers.A = cpu.ADD(cpu.registers.A as u16, cpu.registers.H as u16) as u8;
+            cpu.registers.A = cpu.ADD8(cpu.registers.A, cpu.registers.H);
         },
         0x85 => { // ADD A, L
-            cpu.registers.A = cpu.ADD(cpu.registers.A as u16, cpu.registers.L as u16) as u8;
+            cpu.registers.A = cpu.ADD8(cpu.registers.A, cpu.registers.L);
         },
         0x86 => { // ADD A, (HL)
             let value = cpu.memory[cpu.get_hl() as usize];
-            cpu.registers.A = cpu.ADD(cpu.registers.A as u16, value as u16) as u8;
+            cpu.registers.A = cpu.ADD8(cpu.registers.A, value);
         },
         _ => panic!("Unknown opcode: 0x{:X}", opcode),
     }
