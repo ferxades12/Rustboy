@@ -160,13 +160,15 @@ impl CPU {
         result
     }
 
-    fn ADD8(&mut self, n1: u8, n2: u8) -> u8 {
+    fn ADD8(&mut self, n2: u8) -> u8 {
+        let n1 = self.registers.A;
         let (result, carry) = n1.overflowing_add(n2);
         self.update_flags(result == 0, carry, (n1 & 0x0F) + (n2 & 0x0F) > 0x0F, false);
         result
     }
 
-    fn SUB(&mut self, n1: u16, n2: u16) -> u16 {
+    fn SUB(&mut self, n2: u8) -> u8 {
+        let n1 = self.registers.A;
         let (result, carry) = n1.overflowing_sub(n2);
 
         self.update_flags(result == 0, carry, (n1 & 0x0F) < (n2 & 0x0F), true);
@@ -174,8 +176,9 @@ impl CPU {
         result
     }
 
-    fn ADC(&mut self, n1: u16, n2: u16) -> u16 {
-        let carry_prev = self.get_CF() as u16;
+    fn ADC(&mut self, n2: u8) -> u8 {
+        let n1 = self.registers.A;
+        let carry_prev = self.get_CF() as u8;
         let (result, carry1) = n1.overflowing_add(n2);
         let (result, carry2) = result.overflowing_add(carry_prev);
 
@@ -184,8 +187,9 @@ impl CPU {
         result
     }
 
-    fn SBC(&mut self, n1: u16, n2: u16) -> u16 {
-        let carry_prev = self.get_CF() as u16;
+    fn SBC(&mut self, n2: u8) -> u8 {
+        let n1 = self.registers.A;
+        let carry_prev = self.get_CF() as u8;
         let (result, carry1) = n1.overflowing_sub(n2);
         let (result, carry2) = result.overflowing_sub(carry_prev);
 
