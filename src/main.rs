@@ -106,6 +106,32 @@ impl CPU {
         self.set_register_pair(To, value);
         self.SP += 2;
     }*/
+    fn set_ZF(&mut self, value: bool) {
+        self.registers.F = self.registers.F & 0b0111_1111 | (value as u8) << 7;
+    }
+    fn set_NF(&mut self, value: bool) {
+        self.registers.F = self.registers.F & 0b1011_1111 | (value as u8) << 6;
+    }
+    fn set_HF(&mut self, value: bool) {
+        self.registers.F = self.registers.F & 0b1101_1111 | (value as u8) << 5;
+    }
+    fn set_CF(&mut self, value: bool) {
+        self.registers.F = self.registers.F & 0b1110_1111 | (value as u8) << 4;
+    }
+
+    fn get_ZF(&self) -> bool {
+        (self.registers.F & 0b1000_0000) != 0
+    }
+    fn get_NF(&self) -> bool {
+        (self.registers.F & 0b0100_0000) != 0
+    }
+    fn get_HF(&self) -> bool {
+        (self.registers.F & 0b0010_0000) != 0
+    }
+    fn get_CF(&self) -> bool {
+        (self.registers.F & 0b0001_0000) != 0
+    }
+
 
     fn update_flags(&mut self, zero: bool, carry: bool, half_carry: bool, substract: bool) {
         self.registers.F = 0;
@@ -143,24 +169,21 @@ impl CPU {
     }
 
     fn ADC(&mut self, n1: u16, n2: u16) -> u16 {
-        let carry = if (self.registers.F & 0b0001_0000) != 0 { 1 } else { 0 };
-        let (result, carry2) = n1.overflowing_add(n2);
+        let carry_prev = self.get_CF() as u16;
+        let (result, carry1) = n1.overflowing_add(n2);
+        let (result, carry2) = result.overflowing_add(carry_prev);
 
-        self.update_flags(
-            result == 0,
-            carry2,
-            (n1 & 0x0F) + (n2 & 0x0F) + carry > 0x0F,
-            false,
-        );
+        self.update_flags(result == 0, carry1 | carry2, (n1 & 0x0F) + (n2 & 0x0F) + carry_prev > 0x0F, false);
 
         result
     }
 
     fn SBC(&mut self, n1: u16, n2: u16) -> u16 {
-        let carry = if (self.registers.F & 0b0001_0000) != 0 { 1 } else { 0 };
-        let (result, carry2) = n1.overflowing_sub(n2 + carry);
+        let carry_prev = self.get_CF() as u16;
+        let (result, carry1) = n1.overflowing_sub(n2);
+        let (result, carry2) = result.overflowing_sub(carry_prev);
 
-        self.update_flags(result == 0, carry2, (n1 & 0x0F) < (n2 & 0x0F) + carry, true);
+        self.update_flags(result == 0, carry1 | carry2, ((n1 & 0x0F) < ((n2 & 0x0F) + carry_prev)), true);
 
         result
     }
@@ -180,60 +203,102 @@ impl CPU {
         self.update_flags(self.registers.A == 0, false, false, false);
     }
 
-    fn CP(&mut self, num: u8) {
-        // Compara. Comprueba la resta pero no guarda el resultado
-        let result = self.registers.A as u16 - num as u16;
+    fn CP(&mut self, num: u8) { // Compara. Comprueba la resta pero no guarda el resultado
+        let (result, carry) = self.registers.A.overflowing_sub(num);
         self.update_flags(
             result == 0,
-            result > 0xFF,
+            carry,
             (self.registers.A & 0x0F) + (num & 0x0F) > 0x0F,
-            false,
+            true, 
         );
     }
 
-    fn INC(&mut self, num:u8) -> u8 {
-        let value = num;
+    fn INC(&mut self, value:u8) -> u8 {
         let result = value.wrapping_add(1);
-        self.update_flags(result as u8 == 0, false, (value & 0x0F) + 1 > 0x0F, false);
+        self.update_flags(result as u8 == 0, self.get_CF(), (value & 0x0F) + 1 > 0x0F, false);
 
         result
     }
 
-    fn DEC(&mut self, num:u8) -> u8 {
-        let value = num;
+    fn DEC(&mut self, value:u8) -> u8 {
         let result = value.wrapping_sub(1);
-        self.update_flags(result as u8 == 0, false, (value & 0x0F) < 1, true);
+        self.update_flags(result as u8 == 0, self.get_CF(), (value & 0x0F) < 1, true);
 
+        result
+    }
+
+    fn RLC(&mut self, value:u8) -> u8 { 
+        let seven = value >> 7 & 1 != 0;
+        let result = (value << 1) | (seven as u8);
+        self.update_flags(result == 0, seven, false, false);
         result
     }
 
     fn RLCA(&mut self) {
         self.registers.A = self.RLC(self.registers.A);
-    }
-
-    fn RLC(&mut self, value:u8) -> u8 { 
-        let seven = value >> 7 & 1 != 0;
-
-        self.update_flags(value == 0, seven, false, false);
-        (value << 1) | (seven as u8)
+        self.set_ZF(false);
     }
 
     fn RL(&mut self, value: u8) -> u8 {
         let seven = value >> 7 & 1 != 0;
         let carry = (self.registers.F & 0b0001_0000) >> 4;
-
-        self.update_flags(value == 0, seven, false, false);
-        (value << 1) | carry
+        let result = (value << 1) | carry;
+        self.update_flags(result == 0, seven, false, false);
+        result
     }
 
     fn RLA(&mut self) {
         self.registers.A = self.RL(self.registers.A);
+        self.set_ZF(false);
     }
 
-    fn RRC(&mut self){
-        
+    fn RRC(&mut self, value:u8) -> u8{
+        let bit = 0b0000_0001 & value;
+        let result = (value >> 1) | (bit << 7);
+        self.update_flags(result == 0, bit != 0, false, false);
+        result
+    }
+    
+    fn RRCA(&mut self) {
+        self.registers.A = self.RRC(self.registers.A);
+        self.set_ZF(false);
     }
 
+    fn RR(&mut self, value:u8) -> u8{
+        let bit = 0b0000_0001 & value;
+        let carry = if self.get_CF() {1} else {0};
+        let result = (value >> 1) | (carry << 7);
+        self.update_flags(result == 0, bit != 0, false, false);
+
+        result
+    }
+
+    fn RRA(&mut self){
+        self.registers.A = self.RR(self.registers.A);
+        self.set_ZF(false);
+    }
+
+    fn SLA(&mut self, value:u8) -> u8{
+        let seven = value >> 7 & 1 != 0;
+        let result = value << 1;
+        self.update_flags(result == 0, seven, false, false);
+        result
+    }
+
+    fn SRA(&mut self, value:u8) -> u8{
+        let seven = value & 0b1000_0000;
+        let bit = value & 0b0000_0001;
+        let result = (value >> 1) | seven;
+        self.update_flags(result == 0, bit != 0, false, false);
+        result
+    }
+
+    fn SRL(&mut self, value:u8) -> u8{
+        let bit = value & 0b0000_0001;
+        let result = value >> 1;
+        self.update_flags(result == 0, bit != 0, false, false);
+        result
+    }
 
     fn fetch_byte(&mut self) -> u8 {
         let op = self.memory[self.registers.PC as usize];

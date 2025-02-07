@@ -1,5 +1,5 @@
 
-use crate::{CPU};
+use crate::CPU;
 
 
 fn execute_opcode(cpu: &mut CPU){
@@ -38,8 +38,10 @@ fn execute_opcode(cpu: &mut CPU){
             cpu.memory[(word + 1) as usize] = high;
         },
         0x09 => { // ADD HL, BC
+            let zf = cpu.get_ZF();
             let result = cpu.ADD(cpu.get_hl(), cpu.get_bc());
             cpu.set_hl(result);
+            cpu.set_ZF(zf);
         },
         0x0A => { // LD A, (BC)
             cpu.registers.A = cpu.memory[cpu.get_bc() as usize];
@@ -93,8 +95,10 @@ fn execute_opcode(cpu: &mut CPU){
             //cpu.JR(value);
         },
         0x19 => { // ADD HL, DE
+            let zf = cpu.get_ZF();
             let result = cpu.ADD(cpu.get_hl(), cpu.get_de());
             cpu.set_hl(result);
+            cpu.set_ZF(zf);
         },
         0x1A => { // LD A, (DE)
             cpu.registers.A = cpu.memory[cpu.get_de() as usize];
@@ -151,8 +155,10 @@ fn execute_opcode(cpu: &mut CPU){
             //cpu.JR_Z(value);
         },
         0x29 => { // ADD HL, HL
+            let zf = cpu.get_ZF();
             let result = cpu.ADD(cpu.get_hl(), cpu.get_hl());
             cpu.set_hl(result);
+            cpu.set_ZF(zf);
         },
         0x2A => { // LD A, (HL+)
             let hl = cpu.get_hl();
@@ -202,6 +208,23 @@ fn execute_opcode(cpu: &mut CPU){
             let value = cpu.memory[cpu.get_hl() as usize];
             let result = cpu.DEC(value);
             cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0x36 => { // LD (HL), u8
+            let value = cpu.fetch_byte();
+            cpu.memory[cpu.get_hl() as usize] = value;
+        },
+        0x37 => { // SCF
+            //cpu.SCF();
+        },
+        0x38 => { // JR C, i8
+            let value = cpu.fetch_byte();
+            //cpu.JR_C(value);
+        },
+        0x39 => { // ADD HL, SP
+            let zf = cpu.get_ZF();
+            let result = cpu.ADD(cpu.get_hl(), cpu.registers.SP);
+            cpu.set_hl(result);
+            cpu.set_ZF(zf);
         },
         _ => panic!("Unknown opcode: 0x{:X}", opcode),
     }
