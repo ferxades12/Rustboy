@@ -2,8 +2,8 @@
 use crate::CPU;
 
 
-fn execute_opcode(cpu: &mut CPU){
-    let opcode = cpu.fetch_byte();
+pub fn execute_opcode(cpu: &mut CPU){
+    let opcode = cpu.fetch_byte(); 
     match opcode {
         0x00 => {},
         0x01 => { // LD BC, u16
@@ -708,7 +708,7 @@ fn execute_opcode(cpu: &mut CPU){
         },
         0xD9 => { // RETI
             cpu.RET(true);
-            //cpu.EI();
+            cpu.ei_flag = true;
         },
         0xDA => { // JP C, u16
             cpu.JP(cpu.get_CF());
@@ -1645,6 +1645,5 @@ fn execute_cb_opcode(cpu: &mut CPU){
         0xFF => { // SET 7, A
             cpu.registers.A = cpu.SET(7, cpu.registers.A);
         },
-        _ => panic!("Unknown opcode: 0xCB{:X}", op_code),
-    }
+    } 
 }
