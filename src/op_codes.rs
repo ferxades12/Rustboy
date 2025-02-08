@@ -59,7 +59,7 @@ pub fn execute_opcode(cpu: &mut CPU){
             cpu.registers.C = value;
         },
         0x0F => { // RRCA
-            cpu.RRA();
+            cpu.RRCA();
         },
         0x10 => { // STOP
             cpu.stop_flag = true;

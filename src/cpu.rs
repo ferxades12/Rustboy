@@ -23,8 +23,19 @@ pub struct Registers {
     pub PC: u16,
     pub SP: u16,
     pub IR: u8, // Instruction register
+    pub IE: u8, // Interrupt Enable
+    pub IF: u8, // Interrupt Flag
     pub IME: bool, // Interrupt master enable
 }
+
+pub enum InterruptCode { 
+    Vblank = 0, 
+    Lcd = 1, 
+    Timer = 2,
+    Serial = 3,
+    Joypad = 4, 
+}
+
 impl Registers {
     fn new() -> Registers {
         Registers {
@@ -38,7 +49,9 @@ impl Registers {
             L: 0,
             PC: 0,
             SP: 0,
-            IR: 0,
+            IE: 0, // Interrupt Enable // 7 6 5 Joypad Serial Timer LCD V-Blank    
+            IF: 0, // Interrupt Flag (Requests an interrupt) // 7 6 5 Joypad Serial Timer LCD V-Blank
+            IR: 0, // Instruction register
             IME: false,
         }
     }
@@ -71,6 +84,31 @@ impl CPU {
         }
     }
 
+    pub fn get_ie(&self, code: InterruptCode) -> bool { 
+        (self.registers.IE & (1 << code as u8)) != 0
+    }
+ 
+    pub fn get_if(&self, code: InterruptCode) -> bool { 
+        (self.registers.IF & (1 << code as u8)) != 0
+    }
+
+    pub fn set_ie(&mut self, code: InterruptCode, value: bool) { 
+        if value {
+            self.registers.IE |= 1 << code as u8;
+        } else {
+            self.registers.IE &= !(1 << code as u8);
+        }
+    }
+
+    pub fn set_if(&mut self, code: InterruptCode, value: bool) { 
+        if value {
+            self.registers.IF |= 1 << code as u8;
+        } else {
+            self.registers.IF &= !(1 << code as u8);
+        }
+    }
+
+    
     pub fn get_af(&self) -> u16 {
         ((self.registers.A as u16) << 8) | (self.registers.F as u16)
     }
