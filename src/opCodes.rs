@@ -59,7 +59,7 @@ fn execute_opcode(cpu: &mut CPU){
             cpu.registers.C = value;
         },
         0x0F => { // RRCA
-            //cpu.RRCA();
+            cpu.RRA();
         },
         0x10 => { // STOP
             //cpu.STOP();
@@ -89,8 +89,7 @@ fn execute_opcode(cpu: &mut CPU){
             cpu.RLA();
         },
         0x18 => { // JR i8
-            let value = cpu.fetch_byte();
-            //cpu.JR(value);
+            cpu.JR(true);
         },
         0x19 => { // ADD HL, DE
             let result = cpu.ADD16(cpu.get_hl(), cpu.get_de());
@@ -114,11 +113,10 @@ fn execute_opcode(cpu: &mut CPU){
             cpu.registers.E = value;
         },
         0x1F => { // RRA
-            //cpu.RRA();
+            cpu.RRA();
         },
         0x20 => { // JR NZ, i8
-            let value = cpu.fetch_byte();
-            //cpu.JR_NZ(value);
+            cpu.JR(!cpu.get_ZF());
         },
         0x21 => { // LD HL, u16
             let value = cpu.fetch_word();
@@ -144,11 +142,10 @@ fn execute_opcode(cpu: &mut CPU){
             cpu.registers.H = value;
         },
         0x27 => { // DAA
-            //cpu.DAA();
+            cpu.DAA();
         },
         0x28 => { // JR Z, i8
-            let value = cpu.fetch_byte();
-            //cpu.JR_Z(value);
+            cpu.JR(cpu.get_ZF());
         },
         0x29 => { // ADD HL, HL
             let result = cpu.ADD16(cpu.get_hl(), cpu.get_hl());
@@ -174,11 +171,10 @@ fn execute_opcode(cpu: &mut CPU){
             cpu.registers.L = value;
         },
         0x2F => { // CPL
-            //cpu.CPL();
+            cpu.CPL();
         },
         0x30 => { // JR NC, i8
-            let value = cpu.fetch_byte();
-            //cpu.JR_NC(value);
+            cpu.JR(!cpu.get_CF());
         },
         0x31 => { // LD SP, u16
             let value = cpu.fetch_word();
@@ -208,11 +204,10 @@ fn execute_opcode(cpu: &mut CPU){
             cpu.memory[cpu.get_hl() as usize] = value;
         },
         0x37 => { // SCF
-            //cpu.SCF();
+            cpu.SCF();
         },
         0x38 => { // JR C, i8
-            let value = cpu.fetch_byte();
-            //cpu.JR_C(value);
+            cpu.JR(cpu.get_CF());
         },
         0x39 => { // ADD HL, SP
             let zf = cpu.get_ZF();
@@ -240,7 +235,7 @@ fn execute_opcode(cpu: &mut CPU){
             cpu.registers.A = value;
         },
         0x3F => { // CCF
-            //cpu.CCF();
+            cpu.CCF();
         },
         0x40 => { // LD B, B
             cpu.registers.B = cpu.registers.B;
@@ -633,7 +628,182 @@ fn execute_opcode(cpu: &mut CPU){
         },
         0xBF => { // CP A, A
             cpu.CP(cpu.registers.A);
-        },        
+        },       
+        0xC0 => { // RET NZ
+            cpu.RET(!cpu.get_ZF());
+        }, 
+        0xC1 => { // POP BC
+            let value = cpu.POP();
+            cpu.set_bc(value);
+        },
+        0xC2 => { // JP NZ, u16
+            cpu.JP(!cpu.get_ZF());
+        },
+        0xC3 => { // JP u16
+            cpu.JP(true);
+        },
+        0xC4 => { // CALL NZ, u16
+            cpu.CALL(!cpu.get_ZF());
+        },
+        0xC5 => { // PUSH BC
+            cpu.PUSH(cpu.get_bc());
+        },
+        0xC6 => { // ADD A, u8
+            let value = cpu.fetch_byte();
+            cpu.registers.A = cpu.ADD8(value);
+        },
+        0xC7 => { // RST 00H
+            cpu.RST(0x00);
+        },
+        0xC8 => { // RET Z
+            cpu.RET(cpu.get_ZF());
+        },
+        0xC9 => { // RET
+            cpu.RET(true);
+        },
+        0xCA => { // JP Z, u16
+            cpu.JP(cpu.get_ZF());
+        },
+        0xCB => { // PREFIX CB
+            //cpu.PREFIX_CB();
+        },
+        0xCC => { // CALL Z, u16
+            cpu.CALL(cpu.get_ZF());
+        },
+        0xCD => { // CALL u16
+            cpu.CALL(true);
+        },
+        0xCE => { // ADC A, u8
+            let value = cpu.fetch_byte();
+            cpu.registers.A = cpu.ADC(value);
+        },
+        0xCF => { // RST 08H
+            cpu.RST(0x08);
+        },
+        0xD0 => { // RET NC
+            cpu.RET(!cpu.get_CF());
+        },
+        0xD1 => { // POP DE
+            let value = cpu.POP();
+            cpu.set_de(value);
+        },
+        0xD2 => { // JP NC, u16
+            cpu.JP(!cpu.get_CF());
+        },
+        0xD4 => { // CALL NC, u16
+            cpu.CALL(!cpu.get_CF());
+        },
+        0xD5 => { // PUSH DE
+            cpu.PUSH(cpu.get_de());
+        },
+        0xD6 => { // SUB A, u8
+            let value = cpu.fetch_byte();
+            cpu.registers.A = cpu.SUB(value);
+        },
+        0xD7 => { // RST 10H
+            cpu.RST(0x10);
+        },
+        0xD8 => { // RET C
+            cpu.RET(cpu.get_CF());
+        },
+        0xD9 => { // RETI
+            //cpu.RETI();
+        },
+        0xDA => { // JP C, u16
+            cpu.JP(cpu.get_CF());
+        },
+        0xDC => { // CALL C, u16
+            cpu.CALL(cpu.get_CF());
+        },
+        0xDE => { // SBC A, u8
+            let value = cpu.fetch_byte();
+            cpu.registers.A = cpu.SBC(value);
+        },
+        0xDF => { // RST 18H
+            cpu.RST(0x18);
+        },
+        0xE0 => { // LD (FF00 + u8), A
+            let value = cpu.fetch_byte();
+            cpu.memory[0xFF00 + value as usize] = cpu.registers.A;
+        },
+        0xE1 => { // POP HL
+            let value = cpu.POP();
+            cpu.set_hl(value);
+        },
+        0xE2 => { // LD (FF00 + C), A
+            cpu.memory[0xFF00 + cpu.registers.C as usize] = cpu.registers.A;
+        },
+        0xE5 => { // PUSH HL
+            cpu.PUSH(cpu.get_hl());
+        },
+        0xE6 => { // AND A, u8
+            let value = cpu.fetch_byte();
+            cpu.AND(value);
+        },
+        0xE7 => { // RST 20H
+            cpu.RST(0x20);
+        },
+        0xE8 => { // ADD SP, i8
+            //cpu.ADD_SP();
+        },
+        0xE9 => { // JP HL
+            cpu.JP(false);
+        },
+        0xEA => { // LD (u16), A
+            let value = cpu.fetch_word();
+            cpu.memory[value as usize] = cpu.registers.A;
+        },
+        0xEE => { // XOR A, u8
+            let value = cpu.fetch_byte();
+            cpu.XOR(value);
+        },
+        0xEF => { // RST 28H
+            cpu.RST(0x28);
+        },
+        0xF0 => { // LD A, (FF00 + u8)
+            let value = cpu.fetch_byte();
+            cpu.registers.A = cpu.memory[0xFF00 + value as usize];
+        },
+        0xF1 => { // POP AF //CUIDAO CON ESTAS FLAGS
+            let value = cpu.POP();
+            cpu.set_af(value);
+        },
+        0xF2 => { // LD A, (FF00 + C)
+            cpu.registers.A = cpu.memory[0xFF00 + cpu.registers.C as usize];
+        },
+        0xF3 => { // DI
+            //cpu.DI();
+        },
+        0xF5 => { // PUSH AF
+            cpu.PUSH(cpu.get_af());
+        },
+        0xF6 => { // OR A, u8
+            let value = cpu.fetch_byte();
+            cpu.OR(value);
+        },
+        0xF7 => { // RST 30H
+            cpu.RST(0x30);
+        },
+        0xF8 => { // LD HL, SP + i8
+            //cpu.LD_HL_SP();
+        },
+        0xF9 => { // LD SP, HL
+            cpu.registers.SP = cpu.get_hl();
+        },
+        0xFA => { // LD A, (u16)
+            let value = cpu.fetch_word();
+            cpu.registers.A = cpu.memory[value as usize];
+        },
+        0xFB => { // EI
+            //cpu.EI();
+        },
+        0xFE => { // CP A, u8
+            let value = cpu.fetch_byte();
+            cpu.CP(value);
+        },
+        0xFF => { // RST 38H
+            cpu.RST(0x38);
+        },
         _ => panic!("Unknown opcode: 0x{:X}", opcode),
     }
 }
