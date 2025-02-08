@@ -707,7 +707,8 @@ fn execute_opcode(cpu: &mut CPU){
             cpu.RET(cpu.get_CF());
         },
         0xD9 => { // RETI
-            //cpu.RETI();
+            cpu.RET(true);
+            //cpu.EI();
         },
         0xDA => { // JP C, u16
             cpu.JP(cpu.get_CF());
@@ -744,7 +745,11 @@ fn execute_opcode(cpu: &mut CPU){
             cpu.RST(0x20);
         },
         0xE8 => { // ADD SP, i8
-            //cpu.ADD_SP();
+            let value:i8 = cpu.fetch_byte() as i8;
+            let (result, carry) = cpu.registers.SP.overflowing_add(value as u16);
+            let half_carry = (cpu.registers.SP & 0xF) + ((value as u16) & 0xF) > 0xF;
+            cpu.update_flags(false, carry,half_carry , false);
+            cpu.registers.SP = result;
         },
         0xE9 => { // JP HL
             cpu.JP(false);
@@ -771,7 +776,7 @@ fn execute_opcode(cpu: &mut CPU){
         0xF2 => { // LD A, (FF00 + C)
             cpu.registers.A = cpu.memory[0xFF00 + cpu.registers.C as usize];
         },
-        0xF3 => { // DI
+        0xF3 => { // Disable Interrupt
             //cpu.DI();
         },
         0xF5 => { // PUSH AF
@@ -785,7 +790,11 @@ fn execute_opcode(cpu: &mut CPU){
             cpu.RST(0x30);
         },
         0xF8 => { // LD HL, SP + i8
-            //cpu.LD_HL_SP();
+            let value:i8 = cpu.fetch_byte() as i8;
+            let (result, carry) = cpu.registers.SP.overflowing_add(value as u16);
+            let half_carry = (cpu.registers.SP & 0xF) + ((value as u16) & 0xF) > 0xF;
+            cpu.update_flags(false, carry, half_carry, false);
+            cpu.set_hl(result);
         },
         0xF9 => { // LD SP, HL
             cpu.registers.SP = cpu.get_hl();
@@ -794,7 +803,7 @@ fn execute_opcode(cpu: &mut CPU){
             let value = cpu.fetch_word();
             cpu.registers.A = cpu.memory[value as usize];
         },
-        0xFB => { // EI
+        0xFB => { // Enable Interrupt
             //cpu.EI();
         },
         0xFE => { // CP A, u8
