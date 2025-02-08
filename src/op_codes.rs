@@ -400,7 +400,7 @@ pub fn execute_opcode(cpu: &mut CPU){
             cpu.memory[cpu.get_hl() as usize] = cpu.registers.L;
         },
         0x76 => { // HALT
-            //cpu.HALT();
+            cpu.halt_flag = true;
         },
         0x77 => { // LD (HL), A
             cpu.memory[cpu.get_hl() as usize] = cpu.registers.A;

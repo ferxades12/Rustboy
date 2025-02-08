@@ -48,7 +48,8 @@ pub struct CPU {
     pub registers: Registers,
     pub memory: [u8; MEMORY_SIZE], // Memoria de la CPU
     pub ei_flag:bool, // Flag de interrupciones
-    pub  stop_flag:bool, // Flag de parada 
+    pub stop_flag:bool, // Flag de parada 
+    pub halt_flag:bool,
 
                                /*
                                FLAGS: Bits 7-4 de F
@@ -66,6 +67,7 @@ impl CPU {
             memory: [0; MEMORY_SIZE], // Inicializa la memoria a ceros
             ei_flag: false,
             stop_flag: false,
+            halt_flag: false,
         }
     }
 
