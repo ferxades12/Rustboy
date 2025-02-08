@@ -665,7 +665,7 @@ fn execute_opcode(cpu: &mut CPU){
             cpu.JP(cpu.get_ZF());
         },
         0xCB => { // PREFIX CB
-            //cpu.PREFIX_CB();
+            execute_cb_opcode(cpu);
         },
         0xCC => { // CALL Z, u16
             cpu.CALL(cpu.get_ZF());
@@ -805,5 +805,836 @@ fn execute_opcode(cpu: &mut CPU){
             cpu.RST(0x38);
         },
         _ => panic!("Unknown opcode: 0x{:X}", opcode),
+    }
+}
+
+fn execute_cb_opcode(cpu: &mut CPU){
+    let op_code = cpu.fetch_byte();
+    match op_code {
+        0x00 => { // RLC B
+            cpu.registers.B = cpu.RLC(cpu.registers.B);
+        },
+        0x01 => { // RLC C
+            cpu.registers.C = cpu.RLC(cpu.registers.C);
+        },
+        0x02 => { // RLC D
+            cpu.registers.D = cpu.RLC(cpu.registers.D);
+        },
+        0x03 => { // RLC E
+            cpu.registers.E = cpu.RLC(cpu.registers.E);
+        },
+        0x04 => { // RLC H
+            cpu.registers.H = cpu.RLC(cpu.registers.H);
+        },
+        0x05 => { // RLC L
+            cpu.registers.L = cpu.RLC(cpu.registers.L);
+        },
+        0x06 => { // RLC (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.RLC(value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0x07 => { // RLC A
+            cpu.registers.A = cpu.RLC(cpu.registers.A);
+        },
+        0x08 => { // RRC B
+            cpu.registers.B = cpu.RRC(cpu.registers.B);
+        },
+        0x09 => { // RRC C
+            cpu.registers.C = cpu.RRC(cpu.registers.C);
+        },
+        0x0A => { // RRC D
+            cpu.registers.D = cpu.RRC(cpu.registers.D);
+        },
+        0x0B => { // RRC E
+            cpu.registers.E = cpu.RRC(cpu.registers.E);
+        },
+        0x0C => { // RRC H
+            cpu.registers.H = cpu.RRC(cpu.registers.H);
+        },
+        0x0D => { // RRC L
+            cpu.registers.L = cpu.RRC(cpu.registers.L);
+        },
+        0x0E => { // RRC (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.RRC(value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0x0F => { // RRC A
+            cpu.registers.A = cpu.RRC(cpu.registers.A);
+        },
+        0x10 => { // RL B
+            cpu.registers.B = cpu.RL(cpu.registers.B);
+        },
+        0x11 => { // RL C
+            cpu.registers.C = cpu.RL(cpu.registers.C);
+        },
+        0x12 => { // RL D
+            cpu.registers.D = cpu.RL(cpu.registers.D);
+        },
+        0x13 => { // RL E
+            cpu.registers.E = cpu.RL(cpu.registers.E);
+        },
+        0x14 => { // RL H
+            cpu.registers.H = cpu.RL(cpu.registers.H);
+        },
+        0x15 => { // RL L
+            cpu.registers.L = cpu.RL(cpu.registers.L);
+        },
+        0x16 => { // RL (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.RL(value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0x17 => { // RL A
+            cpu.registers.A = cpu.RL(cpu.registers.A);
+        },
+        0x18 => { // RR B
+            cpu.registers.B = cpu.RR(cpu.registers.B);
+        },
+        0x19 => { // RR C
+            cpu.registers.C = cpu.RR(cpu.registers.C);
+        },
+        0x1A => { // RR D
+            cpu.registers.D = cpu.RR(cpu.registers.D);
+        },
+        0x1B => { // RR E
+            cpu.registers.E = cpu.RR(cpu.registers.E);
+        },
+        0x1C => { // RR H
+            cpu.registers.H = cpu.RR(cpu.registers.H);
+        },
+        0x1D => { // RR L
+            cpu.registers.L = cpu.RR(cpu.registers.L);
+        },
+        0x1E => { // RR (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.RR(value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0x1F => { // RR A
+            cpu.registers.A = cpu.RR(cpu.registers.A);
+        },
+        0x20 => { // SLA B
+            cpu.registers.B = cpu.SLA(cpu.registers.B);
+        },
+        0x21 => { // SLA C
+            cpu.registers.C = cpu.SLA(cpu.registers.C);
+        },
+        0x22 => { // SLA D
+            cpu.registers.D = cpu.SLA(cpu.registers.D);
+        },
+        0x23 => { // SLA E
+            cpu.registers.E = cpu.SLA(cpu.registers.E);
+        },
+        0x24 => { // SLA H
+            cpu.registers.H = cpu.SLA(cpu.registers.H);
+        },
+        0x25 => { // SLA L
+            cpu.registers.L = cpu.SLA(cpu.registers.L);
+        },
+        0x26 => { // SLA (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.SLA(value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0x27 => { // SLA A
+            cpu.registers.A = cpu.SLA(cpu.registers.A);
+        },
+        0x28 => { // SRA B
+            cpu.registers.B = cpu.SRA(cpu.registers.B);
+        },
+        0x29 => { // SRA C
+            cpu.registers.C = cpu.SRA(cpu.registers.C);
+        },
+        0x2A => { // SRA D
+            cpu.registers.D = cpu.SRA(cpu.registers.D);
+        },
+        0x2B => { // SRA E
+            cpu.registers.E = cpu.SRA(cpu.registers.E);
+        },
+        0x2C => { // SRA H
+            cpu.registers.H = cpu.SRA(cpu.registers.H);
+        },
+        0x2D => { // SRA L
+            cpu.registers.L = cpu.SRA(cpu.registers.L);
+        },
+        0x2E => { // SRA (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.SRA(value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0x2F => { // SRA A
+            cpu.registers.A = cpu.SRA(cpu.registers.A);
+        },
+        0x30 => { // SWAP B
+            cpu.registers.B = cpu.SWAP(cpu.registers.B);
+        },
+        0x31 => { // SWAP C
+            cpu.registers.C = cpu.SWAP(cpu.registers.C);
+        },
+        0x32 => { // SWAP D
+            cpu.registers.D = cpu.SWAP(cpu.registers.D);
+        },
+        0x33 => { // SWAP E
+            cpu.registers.E = cpu.SWAP(cpu.registers.E);
+        },
+        0x34 => { // SWAP H
+            cpu.registers.H = cpu.SWAP(cpu.registers.H);
+        },
+        0x35 => { // SWAP L
+            cpu.registers.L = cpu.SWAP(cpu.registers.L);
+        },
+        0x36 => { // SWAP (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.SWAP(value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0x37 => { // SWAP A
+            cpu.registers.A = cpu.SWAP(cpu.registers.A);
+        },
+        0x38 => { // SRL B
+            cpu.registers.B = cpu.SRL(cpu.registers.B);
+        },
+        0x39 => { // SRL C
+            cpu.registers.C = cpu.SRL(cpu.registers.C);
+        },
+        0x3A => { // SRL D
+            cpu.registers.D = cpu.SRL(cpu.registers.D);
+        },
+        0x3B => { // SRL E
+            cpu.registers.E = cpu.SRL(cpu.registers.E);
+        },
+        0x3C => { // SRL H
+            cpu.registers.H = cpu.SRL(cpu.registers.H);
+        },
+        0x3D => { // SRL L
+            cpu.registers.L = cpu.SRL(cpu.registers.L);
+        },
+        0x3E => { // SRL (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.SRL(value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0x3F => { // SRL A
+            cpu.registers.A = cpu.SRL(cpu.registers.A);
+        },
+        0x40 => { // BIT 0, B
+            cpu.BIT(0, cpu.registers.B);
+        },
+        0x41 => { // BIT 0, C
+            cpu.BIT(0, cpu.registers.C);
+        },
+        0x42 => { // BIT 0, D
+            cpu.BIT(0, cpu.registers.D);
+        },
+        0x43 => { // BIT 0, E
+            cpu.BIT(0, cpu.registers.E);
+        },
+        0x44 => { // BIT 0, H
+            cpu.BIT(0, cpu.registers.H);
+        },
+        0x45 => { // BIT 0, L
+            cpu.BIT(0, cpu.registers.L);
+        },
+        0x46 => { // BIT 0, (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            cpu.BIT(0, value);
+        },
+        0x47 => { // BIT 0, A
+            cpu.BIT(0, cpu.registers.A);
+        },
+        0x48 => { // BIT 1, B
+            cpu.BIT(1, cpu.registers.B);
+        },
+        0x49 => { // BIT 1, C
+            cpu.BIT(1, cpu.registers.C);
+        },
+        0x4A => { // BIT 1, D
+            cpu.BIT(1, cpu.registers.D);
+        },
+        0x4B => { // BIT 1, E
+            cpu.BIT(1, cpu.registers.E);
+        },
+        0x4C => { // BIT 1, H
+            cpu.BIT(1, cpu.registers.H);
+        },
+        0x4D => { // BIT 1, L
+            cpu.BIT(1, cpu.registers.L);
+        },
+        0x4E => { // BIT 1, (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            cpu.BIT(1, value);
+        },
+        0x4F => { // BIT 1, A
+            cpu.BIT(1, cpu.registers.A);
+        },
+        0x50 => { // BIT 2, B
+            cpu.BIT(2, cpu.registers.B);
+        },
+        0x51 => { // BIT 2, C
+            cpu.BIT(2, cpu.registers.C);
+        },
+        0x52 => { // BIT 2, D
+            cpu.BIT(2, cpu.registers.D);
+        },
+        0x53 => { // BIT 2, E
+            cpu.BIT(2, cpu.registers.E);
+        },
+        0x54 => { // BIT 2, H
+            cpu.BIT(2, cpu.registers.H);
+        },
+        0x55 => { // BIT 2, L
+            cpu.BIT(2, cpu.registers.L);
+        },
+        0x56 => { // BIT 2, (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            cpu.BIT(2, value);
+        },
+        0x57 => { // BIT 2, A
+            cpu.BIT(2, cpu.registers.A);
+        },
+        0x58 => { // BIT 3, B
+            cpu.BIT(3, cpu.registers.B);
+        },
+        0x59 => { // BIT 3, C
+            cpu.BIT(3, cpu.registers.C);
+        },
+        0x5A => { // BIT 3, D
+            cpu.BIT(3, cpu.registers.D);
+        },
+        0x5B => { // BIT 3, E
+            cpu.BIT(3, cpu.registers.E);
+        },
+        0x5C => { // BIT 3, H
+            cpu.BIT(3, cpu.registers.H);
+        },
+        0x5D => { // BIT 3, L
+            cpu.BIT(3, cpu.registers.L);
+        },
+        0x5E => { // BIT 3, (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            cpu.BIT(3, value);
+        },
+        0x5F => { // BIT 3, A
+            cpu.BIT(3, cpu.registers.A);
+        },
+        0x60 => { // BIT 4, B
+            cpu.BIT(4, cpu.registers.B);
+        },
+        0x61 => { // BIT 4, C
+            cpu.BIT(4, cpu.registers.C);
+        },
+        0x62 => { // BIT 4, D
+            cpu.BIT(4, cpu.registers.D);
+        },
+        0x63 => { // BIT 4, E
+            cpu.BIT(4, cpu.registers.E);
+        },
+        0x64 => { // BIT 4, H
+            cpu.BIT(4, cpu.registers.H);
+        },
+        0x65 => { // BIT 4, L
+            cpu.BIT(4, cpu.registers.L);
+        },
+        0x66 => { // BIT 4, (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            cpu.BIT(4, value);
+        },
+        0x67 => { // BIT 4, A
+            cpu.BIT(4, cpu.registers.A);
+        },
+        0x68 => { // BIT 5, B
+            cpu.BIT(5, cpu.registers.B);
+        },
+        0x69 => { // BIT 5, C
+            cpu.BIT(5, cpu.registers.C);
+        },
+        0x6A => { // BIT 5, D
+            cpu.BIT(5, cpu.registers.D);
+        },
+        0x6B => { // BIT 5, E
+            cpu.BIT(5, cpu.registers.E);
+        },
+        0x6C => { // BIT 5, H
+            cpu.BIT(5, cpu.registers.H);
+        },
+        0x6D => { // BIT 5, L
+            cpu.BIT(5, cpu.registers.L);
+        },
+        0x6E => { // BIT 5, (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            cpu.BIT(5, value);
+        },
+        0x6F => { // BIT 5, A
+            cpu.BIT(5, cpu.registers.A);
+        },
+        0x70 => { // BIT 6, B
+            cpu.BIT(6, cpu.registers.B);
+        },
+        0x71 => { // BIT 6, C
+            cpu.BIT(6, cpu.registers.C);
+        },
+        0x72 => { // BIT 6, D
+            cpu.BIT(6, cpu.registers.D);
+        },
+        0x73 => { // BIT 6, E
+            cpu.BIT(6, cpu.registers.E);
+        },
+        0x74 => { // BIT 6, H
+            cpu.BIT(6, cpu.registers.H);
+        },
+        0x75 => { // BIT 6, L
+            cpu.BIT(6, cpu.registers.L);
+        },
+        0x76 => { // BIT 6, (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            cpu.BIT(6, value);
+        },
+        0x77 => { // BIT 6, A
+            cpu.BIT(6, cpu.registers.A);
+        },
+        0x78 => { // BIT 7, B
+            cpu.BIT(7, cpu.registers.B);
+        },
+        0x79 => { // BIT 7, C
+            cpu.BIT(7, cpu.registers.C);
+        },
+        0x7A => { // BIT 7, D
+            cpu.BIT(7, cpu.registers.D);
+        },
+        0x7B => { // BIT 7, E
+            cpu.BIT(7, cpu.registers.E);
+        },
+        0x7C => { // BIT 7, H
+            cpu.BIT(7, cpu.registers.H);
+        },
+        0x7D => { // BIT 7, L
+            cpu.BIT(7, cpu.registers.L);
+        },
+        0x7E => { // BIT 7, (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            cpu.BIT(7, value);
+        },
+        0x7F => { // BIT 7, A
+            cpu.BIT(7, cpu.registers.A);
+        },
+        0x80 => { // RES 0, B
+            cpu.registers.B = cpu.RES(0, cpu.registers.B);
+        },
+        0x81 => { // RES 0, C
+            cpu.registers.C = cpu.RES(0, cpu.registers.C);
+        },
+        0x82 => { // RES 0, D
+            cpu.registers.D = cpu.RES(0, cpu.registers.D);
+        },
+        0x83 => { // RES 0, E
+            cpu.registers.E = cpu.RES(0, cpu.registers.E);
+        },
+        0x84 => { // RES 0, H
+            cpu.registers.H = cpu.RES(0, cpu.registers.H);
+        },
+        0x85 => { // RES 0, L
+            cpu.registers.L = cpu.RES(0, cpu.registers.L);
+        },
+        0x86 => { // RES 0, (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.RES(0, value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0x87 => { // RES 0, A
+            cpu.registers.A = cpu.RES(0, cpu.registers.A);
+        },
+        0x88 => { // RES 1, B
+            cpu.registers.B = cpu.RES(1, cpu.registers.B);
+        },
+        0x89 => { // RES 1, C
+            cpu.registers.C = cpu.RES(1, cpu.registers.C);
+        },
+        0x8A => { // RES 1, D
+            cpu.registers.D = cpu.RES(1, cpu.registers.D);
+        },
+        0x8B => { // RES 1, E
+            cpu.registers.E = cpu.RES(1, cpu.registers.E);
+        },
+        0x8C => { // RES 1, H
+            cpu.registers.H = cpu.RES(1, cpu.registers.H);
+        },
+        0x8D => { // RES 1, L
+            cpu.registers.L = cpu.RES(1, cpu.registers.L);
+        },
+        0x8E => { // RES 1, (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.RES(1, value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0x8F => { // RES 1, A
+            cpu.registers.A = cpu.RES(1, cpu.registers.A);
+        },
+        0x90 => { // RES 2, B
+            cpu.registers.B = cpu.RES(2, cpu.registers.B);
+        },
+        0x91 => { // RES 2, C
+            cpu.registers.C = cpu.RES(2, cpu.registers.C);
+        },
+        0x92 => { // RES 2, D
+            cpu.registers.D = cpu.RES(2, cpu.registers.D);
+        },
+        0x93 => { // RES 2, E
+            cpu.registers.E = cpu.RES(2, cpu.registers.E);
+        },
+        0x94 => { // RES 2, H
+            cpu.registers.H = cpu.RES(2, cpu.registers.H);
+        },
+        0x95 => { // RES 2, L
+            cpu.registers.L = cpu.RES(2, cpu.registers.L);
+        },
+        0x96 => { // RES 2, (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.RES(2, value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0x97 => { // RES 2, A
+            cpu.registers.A = cpu.RES(2, cpu.registers.A);
+        },
+        0x98 => { // RES 3, B
+            cpu.registers.B = cpu.RES(3, cpu.registers.B);
+        },
+        0x99 => { // RES 3, C
+            cpu.registers.C = cpu.RES(3, cpu.registers.C);
+        },
+        0x9A => { // RES 3, D
+            cpu.registers.D = cpu.RES(3, cpu.registers.D);
+        },
+        0x9B => { // RES 3, E
+            cpu.registers.E = cpu.RES(3, cpu.registers.E);
+        },
+        0x9C => { // RES 3, H
+            cpu.registers.H = cpu.RES(3, cpu.registers.H);
+        },
+        0x9D => { // RES 3, L
+            cpu.registers.L = cpu.RES(3, cpu.registers.L);
+        },
+        0x9E => { // RES 3, (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.RES(3, value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0x9F => { // RES 3, A
+            cpu.registers.A = cpu.RES(3, cpu.registers.A);
+        },
+        0xA0 => { // RES 4, B
+            cpu.registers.B = cpu.RES(4, cpu.registers.B);
+        },
+        0xA1 => { // RES 4, C
+            cpu.registers.C = cpu.RES(4, cpu.registers.C);
+        },
+        0xA2 => { // RES 4, D
+            cpu.registers.D = cpu.RES(4, cpu.registers.D);
+        },
+        0xA3 => { // RES 4, E
+            cpu.registers.E = cpu.RES(4, cpu.registers.E);
+        },
+        0xA4 => { // RES 4, H
+            cpu.registers.H = cpu.RES(4, cpu.registers.H);
+        },
+        0xA5 => { // RES 4, L
+            cpu.registers.L = cpu.RES(4, cpu.registers.L);
+        },
+        0xA6 => { // RES 4, (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.RES(4, value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0xA7 => { // RES 4, A
+            cpu.registers.A = cpu.RES(4, cpu.registers.A);
+        },
+        0xA8 => { // RES 5, B
+            cpu.registers.B = cpu.RES(5, cpu.registers.B);
+        },
+        0xA9 => { // RES 5, C
+            cpu.registers.C = cpu.RES(5, cpu.registers.C);
+        },
+        0xAA => { // RES 5, D
+            cpu.registers.D = cpu.RES(5, cpu.registers.D);
+        },
+        0xAB => { // RES 5, E
+            cpu.registers.E = cpu.RES(5, cpu.registers.E);
+        },
+        0xAC => { // RES 5, H
+            cpu.registers.H = cpu.RES(5, cpu.registers.H);
+        },
+        0xAD => { // RES 5, L
+            cpu.registers.L = cpu.RES(5, cpu.registers.L);
+        },
+        0xAE => { // RES 5, (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.RES(5, value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0xAF => { // RES 5, A
+            cpu.registers.A = cpu.RES(5, cpu.registers.A);
+        },
+        0xB0 => { // RES 6, B
+            cpu.registers.B = cpu.RES(6, cpu.registers.B);
+        },
+        0xB1 => { // RES 6, C
+            cpu.registers.C = cpu.RES(6, cpu.registers.C);
+        },
+        0xB2 => { // RES 6, D
+            cpu.registers.D = cpu.RES(6, cpu.registers.D);
+        },
+        0xB3 => { // RES 6, E
+            cpu.registers.E = cpu.RES(6, cpu.registers.E);
+        },
+        0xB4 => { // RES 6, H
+            cpu.registers.H = cpu.RES(6, cpu.registers.H);
+        },
+        0xB5 => { // RES 6, L
+            cpu.registers.L = cpu.RES(6, cpu.registers.L);
+        },
+        0xB6 => { // RES 6, (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.RES(6, value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0xB7 => { // RES 6, A
+            cpu.registers.A = cpu.RES(6, cpu.registers.A);
+        },
+        0xB8 => { // RES 7, B
+            cpu.registers.B = cpu.RES(7, cpu.registers.B);
+        },
+        0xB9 => { // RES 7, C
+            cpu.registers.C = cpu.RES(7, cpu.registers.C);
+        },
+        0xBA => { // RES 7, D
+            cpu.registers.D = cpu.RES(7, cpu.registers.D);
+        },
+        0xBB => { // RES 7, E
+            cpu.registers.E = cpu.RES(7, cpu.registers.E);
+        },
+        0xBC => { // RES 7, H
+            cpu.registers.H = cpu.RES(7, cpu.registers.H);
+        },
+        0xBD => { // RES 7, L
+            cpu.registers.L = cpu.RES(7, cpu.registers.L);
+        },
+        0xBE => { // RES 7, (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.RES(7, value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0xBF => { // RES 7, A
+            cpu.registers.A = cpu.RES(7, cpu.registers.A);
+        },
+        0xC0 => { // SET 0, B
+            cpu.registers.B = cpu.SET(0, cpu.registers.B);
+        },
+        0xC1 => { // SET 0, C
+            cpu.registers.C = cpu.SET(0, cpu.registers.C);
+        },
+        0xC2 => { // SET 0, D
+            cpu.registers.D = cpu.SET(0, cpu.registers.D);
+        },
+        0xC3 => { // SET 0, E
+            cpu.registers.E = cpu.SET(0, cpu.registers.E);
+        },
+        0xC4 => { // SET 0, H
+            cpu.registers.H = cpu.SET(0, cpu.registers.H);
+        },
+        0xC5 => { // SET 0, L
+            cpu.registers.L = cpu.SET(0, cpu.registers.L);
+        },
+        0xC6 => { // SET 0, (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.SET(0, value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0xC7 => { // SET 0, A
+            cpu.registers.A = cpu.SET(0, cpu.registers.A);
+        },
+        0xC8 => { // SET 1, B
+            cpu.registers.B = cpu.SET(1, cpu.registers.B);
+        },
+        0xC9 => { // SET 1, C
+            cpu.registers.C = cpu.SET(1, cpu.registers.C);
+        },
+        0xCA => { // SET 1, D
+            cpu.registers.D = cpu.SET(1, cpu.registers.D);
+        },
+        0xCB => { // SET 1, E
+            cpu.registers.E = cpu.SET(1, cpu.registers.E);
+        },
+        0xCC => { // SET 1, H
+            cpu.registers.H = cpu.SET(1, cpu.registers.H);
+        },
+        0xCD => { // SET 1, L
+            cpu.registers.L = cpu.SET(1, cpu.registers.L);
+        },
+        0xCE => { // SET 1, (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.SET(1, value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0xCF => { // SET 1, A
+            cpu.registers.A = cpu.SET(1, cpu.registers.A);
+        },
+        0xD0 => { // SET 2, B
+            cpu.registers.B = cpu.SET(2, cpu.registers.B);
+        },
+        0xD1 => { // SET 2, C
+            cpu.registers.C = cpu.SET(2, cpu.registers.C);
+        },
+        0xD2 => { // SET 2, D
+            cpu.registers.D = cpu.SET(2, cpu.registers.D);
+        },
+        0xD3 => { // SET 2, E
+            cpu.registers.E = cpu.SET(2, cpu.registers.E);
+        },
+        0xD4 => { // SET 2, H
+            cpu.registers.H = cpu.SET(2, cpu.registers.H);
+        },
+        0xD5 => { // SET 2, L
+            cpu.registers.L = cpu.SET(2, cpu.registers.L);
+        },
+        0xD6 => { // SET 2, (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.SET(2, value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0xD7 => { // SET 2, A
+            cpu.registers.A = cpu.SET(2, cpu.registers.A);
+        },
+        0xD8 => { // SET 3, B
+            cpu.registers.B = cpu.SET(3, cpu.registers.B);
+        },
+        0xD9 => { // SET 3, C
+            cpu.registers.C = cpu.SET(3, cpu.registers.C);
+        },
+        0xDA => { // SET 3, D
+            cpu.registers.D = cpu.SET(3, cpu.registers.D);
+        },
+        0xDB => { // SET 3, E
+            cpu.registers.E = cpu.SET(3, cpu.registers.E);
+        },
+        0xDC => { // SET 3, H
+            cpu.registers.H = cpu.SET(3, cpu.registers.H);
+        },
+        0xDD => { // SET 3, L
+            cpu.registers.L = cpu.SET(3, cpu.registers.L);
+        },
+        0xDE => { // SET 3, (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.SET(3, value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0xDF => { // SET 3, A
+            cpu.registers.A = cpu.SET(3, cpu.registers.A);
+        },
+        0xE0 => { // SET 4, B
+            cpu.registers.B = cpu.SET(4, cpu.registers.B);
+        },
+        0xE1 => { // SET 4, C
+            cpu.registers.C = cpu.SET(4, cpu.registers.C);
+        },
+        0xE2 => { // SET 4, D
+            cpu.registers.D = cpu.SET(4, cpu.registers.D);
+        },
+        0xE3 => { // SET 4, E
+            cpu.registers.E = cpu.SET(4, cpu.registers.E);
+        },
+        0xE4 => { // SET 4, H
+            cpu.registers.H = cpu.SET(4, cpu.registers.H);
+        },
+        0xE5 => { // SET 4, L
+            cpu.registers.L = cpu.SET(4, cpu.registers.L);
+        },
+        0xE6 => { // SET 4, (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.SET(4, value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0xE7 => { // SET 4, A
+            cpu.registers.A = cpu.SET(4, cpu.registers.A);
+        },
+        0xE8 => { // SET 5, B
+            cpu.registers.B = cpu.SET(5, cpu.registers.B);
+        },
+        0xE9 => { // SET 5, C
+            cpu.registers.C = cpu.SET(5, cpu.registers.C);
+        },
+        0xEA => { // SET 5, D
+            cpu.registers.D = cpu.SET(5, cpu.registers.D);
+        },
+        0xEB => { // SET 5, E
+            cpu.registers.E = cpu.SET(5, cpu.registers.E);
+        },
+        0xEC => { // SET 5, H
+            cpu.registers.H = cpu.SET(5, cpu.registers.H);
+        },
+        0xED => { // SET 5, L
+            cpu.registers.L = cpu.SET(5, cpu.registers.L);
+        },
+        0xEE => { // SET 5, (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.SET(5, value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0xEF => { // SET 5, A
+            cpu.registers.A = cpu.SET(5, cpu.registers.A);
+        },
+        0xF0 => { // SET 6, B
+            cpu.registers.B = cpu.SET(6, cpu.registers.B);
+        },
+        0xF1 => { // SET 6, C
+            cpu.registers.C = cpu.SET(6, cpu.registers.C);
+        },
+        0xF2 => { // SET 6, D
+            cpu.registers.D = cpu.SET(6, cpu.registers.D);
+        },
+        0xF3 => { // SET 6, E
+            cpu.registers.E = cpu.SET(6, cpu.registers.E);
+        },
+        0xF4 => { // SET 6, H
+            cpu.registers.H = cpu.SET(6, cpu.registers.H);
+        },
+        0xF5 => { // SET 6, L
+            cpu.registers.L = cpu.SET(6, cpu.registers.L);
+        },
+        0xF6 => { // SET 6, (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.SET(6, value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0xF7 => { // SET 6, A
+            cpu.registers.A = cpu.SET(6, cpu.registers.A);
+        },
+        0xF8 => { // SET 7, B
+            cpu.registers.B = cpu.SET(7, cpu.registers.B);
+        },
+        0xF9 => { // SET 7, C
+            cpu.registers.C = cpu.SET(7, cpu.registers.C);
+        },
+        0xFA => { // SET 7, D
+            cpu.registers.D = cpu.SET(7, cpu.registers.D);
+        },
+        0xFB => { // SET 7, E
+            cpu.registers.E = cpu.SET(7, cpu.registers.E);
+        },
+        0xFC => { // SET 7, H
+            cpu.registers.H = cpu.SET(7, cpu.registers.H);
+        },
+        0xFD => { // SET 7, L
+            cpu.registers.L = cpu.SET(7, cpu.registers.L);
+        },
+        0xFE => { // SET 7, (HL)
+            let value = cpu.memory[cpu.get_hl() as usize];
+            let result = cpu.SET(7, value);
+            cpu.memory[cpu.get_hl() as usize] = result;
+        },
+        0xFF => { // SET 7, A
+            cpu.registers.A = cpu.SET(7, cpu.registers.A);
+        },
+        _ => panic!("Unknown opcode: 0xCB{:X}", op_code),
     }
 }
