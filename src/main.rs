@@ -24,7 +24,7 @@ struct Registers {
     PC: u16,
     SP: u16,
     IR: u8, // Instruction register
-    IE: u8, // Interrupt enable
+    IME: bool, // Interrupt master enable
 }
 impl Registers {
     fn new() -> Registers {
@@ -40,7 +40,7 @@ impl Registers {
             PC: 0,
             SP: 0,
             IR: 0,
-            IE: 0,
+            IME: false,
         }
     }
 }
@@ -48,6 +48,8 @@ impl Registers {
 pub struct CPU {
     registers: Registers,
     memory: [u8; MEMORY_SIZE], // Memoria de la CPU
+    ei_flag:bool, // Flag de interrupciones
+    stop_flag:bool, // Flag de parada
 
                                /*
                                FLAGS: Bits 7-4 de F
@@ -63,6 +65,8 @@ impl CPU {
         CPU {
             registers: Registers::new(),
             memory: [0; MEMORY_SIZE], // Inicializa la memoria a ceros
+            ei_flag: false,
+            stop_flag: false,
         }
     }
 

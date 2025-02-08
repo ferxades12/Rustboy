@@ -62,7 +62,7 @@ fn execute_opcode(cpu: &mut CPU){
             cpu.RRA();
         },
         0x10 => { // STOP
-            //cpu.STOP();
+            cpu.stop_flag = true;
         },
         0x11 => { // LD DE, u16
             let value = cpu.fetch_word();
@@ -777,7 +777,8 @@ fn execute_opcode(cpu: &mut CPU){
             cpu.registers.A = cpu.memory[0xFF00 + cpu.registers.C as usize];
         },
         0xF3 => { // Disable Interrupt
-            //cpu.DI();
+            cpu.ei_flag = false;
+            cpu.registers.IME = false;
         },
         0xF5 => { // PUSH AF
             cpu.PUSH(cpu.get_af());
@@ -804,7 +805,7 @@ fn execute_opcode(cpu: &mut CPU){
             cpu.registers.A = cpu.memory[value as usize];
         },
         0xFB => { // Enable Interrupt
-            //cpu.EI();
+            cpu.ei_flag = true;
         },
         0xFE => { // CP A, u8
             let value = cpu.fetch_byte();
