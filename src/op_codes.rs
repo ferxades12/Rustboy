@@ -12,7 +12,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x02 => {
             // LD (BC), A
-            cpu.memory[cpu.get_bc() as usize] = cpu.registers.A;
+            cpu.mmu.write_byte(cpu.get_bc(), cpu.registers.A);
             2
         }
         0x03 => {
@@ -45,10 +45,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         0x08 => {
             // LD (u16), SP
             let word = cpu.fetch_word();
-            let low = word as u8;
-            let high = (word >> 8) as u8;
-            cpu.memory[word as usize] = low;
-            cpu.memory[(word + 1) as usize] = high;
+            cpu.mmu.write_word(word, cpu.registers.SP);
             5
         }
         0x09 => {
@@ -59,7 +56,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x0A => {
             // LD A, (BC)
-            cpu.registers.A = cpu.memory[cpu.get_bc() as usize];
+            cpu.registers.A = cpu.mmu.read_byte(cpu.get_bc());
             2
         }
         0x0B => {
@@ -102,7 +99,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x12 => {
             // LD (DE), A
-            cpu.memory[cpu.get_de() as usize] = cpu.registers.A;
+            cpu.mmu.write_byte(cpu.get_de(), cpu.registers.A);
             2
         }
         0x13 => {
@@ -145,7 +142,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x1A => {
             // LD A, (DE)
-            cpu.registers.A = cpu.memory[cpu.get_de() as usize];
+            cpu.registers.A = cpu.mmu.read_byte(cpu.get_de());
             2
         }
         0x1B => {
@@ -194,7 +191,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         0x22 => {
             // LD (HL+), A
             let hl = cpu.get_hl();
-            cpu.memory[hl as usize] = cpu.registers.A;
+            cpu.mmu.write_byte(hl, cpu.registers.A);
             cpu.set_hl(hl.wrapping_add(1));
             2
         }
@@ -244,7 +241,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         0x2A => {
             // LD A, (HL+)
             let hl = cpu.get_hl();
-            cpu.registers.A = cpu.memory[hl as usize];
+            cpu.registers.A = cpu.mmu.read_byte(hl);
             cpu.set_hl(hl.wrapping_add(1));
             2
         }
@@ -294,7 +291,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         0x32 => {
             // LD (HL-), A
             let hl = cpu.get_hl();
-            cpu.memory[hl as usize] = cpu.registers.A;
+            cpu.mmu.write_byte(hl, cpu.registers.A);
             cpu.set_hl(hl.wrapping_sub(1));
             2
         }
@@ -306,22 +303,22 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x34 => {
             // INC (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.INC(value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             3
         }
         0x35 => {
             // DEC (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.DEC(value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             3
         }
         0x36 => {
             // LD (HL), u8
             let value = cpu.fetch_byte();
-            cpu.memory[cpu.get_hl() as usize] = value;
+            cpu.mmu.write_byte(cpu.get_hl(), value);
             3
         }
         0x37 => {
@@ -351,7 +348,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         0x3A => {
             // LD A, (HL-)
             let hl = cpu.get_hl();
-            cpu.registers.A = cpu.memory[hl as usize];
+            cpu.registers.A = cpu.mmu.read_byte(hl);
             cpu.set_hl(hl.wrapping_sub(1));
             2
         }
@@ -414,7 +411,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x46 => {
             // LD B, (HL)
-            cpu.registers.B = cpu.memory[cpu.get_hl() as usize];
+            cpu.registers.B = cpu.mmu.read_byte(cpu.get_hl());
             2
         }
         0x47 => {
@@ -454,7 +451,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x4E => {
             // LD C, (HL)
-            cpu.registers.C = cpu.memory[cpu.get_hl() as usize];
+            cpu.registers.C = cpu.mmu.read_byte(cpu.get_hl());
             2
         }
         0x4F => {
@@ -494,7 +491,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x56 => {
             // LD D, (HL)
-            cpu.registers.D = cpu.memory[cpu.get_hl() as usize];
+            cpu.registers.D = cpu.mmu.read_byte(cpu.get_hl());
             2
         }
         0x57 => {
@@ -534,7 +531,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x5E => {
             // LD E, (HL)
-            cpu.registers.E = cpu.memory[cpu.get_hl() as usize];
+            cpu.registers.E = cpu.mmu.read_byte(cpu.get_hl());
             2
         }
         0x5F => {
@@ -574,7 +571,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x66 => {
             // LD H, (HL)
-            cpu.registers.H = cpu.memory[cpu.get_hl() as usize];
+            cpu.registers.H = cpu.mmu.read_byte(cpu.get_hl());
             2
         }
         0x67 => {
@@ -614,7 +611,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x6E => {
             // LD L, (HL)
-            cpu.registers.L = cpu.memory[cpu.get_hl() as usize];
+            cpu.registers.L = cpu.mmu.read_byte(cpu.get_hl());
             2
         }
         0x6F => {
@@ -624,32 +621,32 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x70 => {
             // LD (HL), B
-            cpu.memory[cpu.get_hl() as usize] = cpu.registers.B;
+            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.B);
             2
         }
         0x71 => {
             // LD (HL), C
-            cpu.memory[cpu.get_hl() as usize] = cpu.registers.C;
+            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.C);
             2
         }
         0x72 => {
             // LD (HL), D
-            cpu.memory[cpu.get_hl() as usize] = cpu.registers.D;
+            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.D);
             2
         }
         0x73 => {
             // LD (HL), E
-            cpu.memory[cpu.get_hl() as usize] = cpu.registers.E;
+            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.E);
             2
         }
         0x74 => {
             // LD (HL), H
-            cpu.memory[cpu.get_hl() as usize] = cpu.registers.H;
+            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.H);
             2
         }
         0x75 => {
             // LD (HL), L
-            cpu.memory[cpu.get_hl() as usize] = cpu.registers.L;
+            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.L);
             2
         }
         0x76 => {
@@ -659,7 +656,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x77 => {
             // LD (HL), A
-            cpu.memory[cpu.get_hl() as usize] = cpu.registers.A;
+            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.A);
             2
         }
         0x78 => {
@@ -694,7 +691,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x7E => {
             // LD A, (HL)
-            cpu.registers.A = cpu.memory[cpu.get_hl() as usize];
+            cpu.registers.A = cpu.mmu.read_byte(cpu.get_hl());
             2
         }
         0x7F => {
@@ -734,7 +731,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x86 => {
             // ADD A, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             cpu.registers.A = cpu.ADD8(value);
             2
         }
@@ -775,7 +772,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x8E => {
             // ADC A, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             cpu.registers.A = cpu.ADC(value);
             2
         }
@@ -816,7 +813,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x96 => {
             // SUB A, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             cpu.registers.A = cpu.SUB(value);
             2
         }
@@ -857,7 +854,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x9E => {
             // SBC A, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             cpu.registers.A = cpu.SBC(value);
             2
         }
@@ -898,7 +895,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xA6 => {
             // AND A, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             cpu.AND(value);
             2
         }
@@ -939,7 +936,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xAE => {
             // XOR A, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             cpu.XOR(value);
             2
         }
@@ -980,7 +977,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xB6 => {
             // OR A, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             cpu.OR(value);
             2
         }
@@ -1021,7 +1018,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xBE => {
             // CP A, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             cpu.CP(value);
             2
         }
@@ -1240,7 +1237,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         0xE0 => {
             // LD (FF00 + u8), A
             let value = cpu.fetch_byte();
-            cpu.memory[0xFF00 + value as usize] = cpu.registers.A;
+            cpu.mmu.write_byte(0xFF00 + value as u16, cpu.registers.A);
             3
         }
         0xE1 => {
@@ -1251,7 +1248,8 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xE2 => {
             // LD (FF00 + C), A
-            cpu.memory[0xFF00 + cpu.registers.C as usize] = cpu.registers.A;
+            cpu.mmu
+                .write_byte(0xFF00 + cpu.registers.C as u16, cpu.registers.A);
             2
         }
         0xE5 => {
@@ -1287,7 +1285,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         0xEA => {
             // LD (u16), A
             let value = cpu.fetch_word();
-            cpu.memory[value as usize] = cpu.registers.A;
+            cpu.mmu.write_byte(value, cpu.registers.A);
             4
         }
         0xEE => {
@@ -1304,7 +1302,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         0xF0 => {
             // LD A, (FF00 + u8)
             let value = cpu.fetch_byte();
-            cpu.registers.A = cpu.memory[0xFF00 + value as usize];
+            cpu.registers.A = cpu.mmu.read_byte(0xFF00 + value as u16);
             3
         }
         0xF1 => {
@@ -1315,13 +1313,13 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xF2 => {
             // LD A, (FF00 + C)
-            cpu.registers.A = cpu.memory[0xFF00 + cpu.registers.C as usize];
+            cpu.registers.A = cpu.mmu.read_byte(0xFF00 + cpu.registers.C as u16);
             2
         }
         0xF3 => {
             // Disable Interrupt
             cpu.ei_flag = false;
-            cpu.registers.IME = false;
+            cpu.ime = false;
             1
         }
         0xF5 => {
@@ -1357,7 +1355,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         0xFA => {
             // LD A, (u16)
             let value = cpu.fetch_word();
-            cpu.registers.A = cpu.memory[value as usize];
+            cpu.registers.A = cpu.mmu.read_byte(value);
             4
         }
         0xFB => {
@@ -1415,9 +1413,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x06 => {
             // RLC (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.RLC(value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x07 => {
@@ -1457,9 +1455,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x0E => {
             // RRC (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.RRC(value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x0F => {
@@ -1499,9 +1497,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x16 => {
             // RL (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.RL(value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x17 => {
@@ -1541,9 +1539,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x1E => {
             // RR (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.RR(value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x1F => {
@@ -1583,9 +1581,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x26 => {
             // SLA (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.SLA(value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x27 => {
@@ -1625,9 +1623,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x2E => {
             // SRA (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.SRA(value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x2F => {
@@ -1667,9 +1665,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x36 => {
             // SWAP (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.SWAP(value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x37 => {
@@ -1709,9 +1707,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x3E => {
             // SRL (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.SRL(value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x3F => {
@@ -1751,7 +1749,7 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x46 => {
             // BIT 0, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             cpu.BIT(0, value);
             4
         }
@@ -1792,7 +1790,7 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x4E => {
             // BIT 1, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             cpu.BIT(1, value);
             4
         }
@@ -1833,7 +1831,7 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x56 => {
             // BIT 2, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             cpu.BIT(2, value);
             4
         }
@@ -1874,7 +1872,7 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x5E => {
             // BIT 3, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             cpu.BIT(3, value);
             4
         }
@@ -1915,7 +1913,7 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x66 => {
             // BIT 4, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             cpu.BIT(4, value);
             4
         }
@@ -1956,7 +1954,7 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x6E => {
             // BIT 5, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             cpu.BIT(5, value);
             4
         }
@@ -1997,7 +1995,7 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x76 => {
             // BIT 6, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             cpu.BIT(6, value);
             4
         }
@@ -2038,7 +2036,7 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x7E => {
             // BIT 7, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             cpu.BIT(7, value);
             4
         }
@@ -2079,9 +2077,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x86 => {
             // RES 0, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.RES(0, value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x87 => {
@@ -2121,9 +2119,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x8E => {
             // RES 1, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.RES(1, value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x8F => {
@@ -2163,9 +2161,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x96 => {
             // RES 2, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.RES(2, value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x97 => {
@@ -2205,9 +2203,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x9E => {
             // RES 3, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.RES(3, value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x9F => {
@@ -2247,9 +2245,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0xA6 => {
             // RES 4, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.RES(4, value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xA7 => {
@@ -2289,9 +2287,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0xAE => {
             // RES 5, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.RES(5, value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xAF => {
@@ -2331,9 +2329,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0xB6 => {
             // RES 6, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.RES(6, value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xB7 => {
@@ -2373,9 +2371,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0xBE => {
             // RES 7, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.RES(7, value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xBF => {
@@ -2415,9 +2413,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0xC6 => {
             // SET 0, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.SET(0, value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xC7 => {
@@ -2457,9 +2455,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0xCE => {
             // SET 1, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.SET(1, value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xCF => {
@@ -2499,9 +2497,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0xD6 => {
             // SET 2, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.SET(2, value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xD7 => {
@@ -2541,9 +2539,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0xDE => {
             // SET 3, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.SET(3, value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xDF => {
@@ -2583,9 +2581,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0xE6 => {
             // SET 4, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.SET(4, value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xE7 => {
@@ -2625,9 +2623,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0xEE => {
             // SET 5, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.SET(5, value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xEF => {
@@ -2667,9 +2665,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0xF6 => {
             // SET 6, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.SET(6, value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xF7 => {
@@ -2709,9 +2707,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0xFE => {
             // SET 7, (HL)
-            let value = cpu.memory[cpu.get_hl() as usize];
+            let value = cpu.mmu.read_byte(cpu.get_hl());
             let result = cpu.SET(7, value);
-            cpu.memory[cpu.get_hl() as usize] = result;
+            cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xFF => {

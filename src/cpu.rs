@@ -1,6 +1,6 @@
+use crate::mmu::MMU;
 use crate::op_codes::execute_opcode;
 
-const MEMORY_SIZE: usize = 65536;
 const ROM_BANK_0: usize = 0x0000; // ROM Bank 0 (32KB) HOME BANK
 const ROM_BANK_1: usize = 0x4000; // ROM Bank 1 (32KB)
 const VRAM: usize = 0x8000; // VRAM (8KB) Background tiles
@@ -25,14 +25,6 @@ pub struct Registers {
     pub L: u8,
     pub PC: u16,
     pub SP: u16,
-    pub IR: u8,    // Instruction register
-    pub IE: u8,    // Interrupt Enable
-    pub IF: u8,    // Interrupt Flag
-    pub IME: bool, // Interrupt master enable
-    pub DIV: u8,   // Divider Register
-    pub TIMA: u8,  // Timer counter
-    pub TMA: u8,   // Timer modulo
-    pub TAC: u8,   // Timer control
 }
 
 pub enum InterruptCode {
@@ -43,63 +35,66 @@ pub enum InterruptCode {
     Joypad = 4,
 }
 
+pub enum ControlRegisters {
+    IE = 0xFFFF, // Interrupt Enable // 7 6 5 Joypad Serial Timer LCD V-Blank
+    IF = 0xFF0F, // Interrupt Flag (Requests an interrupt) // 7 6 5 Joypad Serial Timer LCD V-Blank
+    DIV = 0xFF04,
+    TIMA = 0xFF05,
+    TMA = 0xFF06,
+    TAC = 0xFF07,
+}
+
 impl Registers {
     fn new() -> Registers {
         Registers {
-            A: 0,
-            F: 0,
-            B: 0,
-            C: 0,
-            D: 0,
-            E: 0,
-            H: 0,
-            L: 0,
-            PC: 0,
-            SP: 0,
-            IE: 0, // Interrupt Enable // 7 6 5 Joypad Serial Timer LCD V-Blank
-            IF: 0, // Interrupt Flag (Requests an interrupt) // 7 6 5 Joypad Serial Timer LCD V-Blank
-            IR: 0, // Instruction register
-            IME: false,
-            DIV: 0,
-            TIMA: 0,
-            TMA: 0,
-            TAC: 0,
+            A: 0x01,
+            F: 0xB0,
+            B: 0x00,
+            C: 0x13,
+            D: 0x00,
+            E: 0xD8,
+            H: 0x01,
+            L: 0x4D,
+            PC: 0x0100, // Start address of the program
+            SP: 0xFFFE, // Initial stack pointer
         }
     }
 }
 
 pub struct CPU {
     pub registers: Registers,
-    pub memory: [u8; MEMORY_SIZE], // Memoria de la CPU
-    pub ei_flag: bool,             // Flag de interrupciones
-    pub stop_flag: bool,           // Flag de parada
+    pub mmu: MMU,
+    pub ei_flag: bool,   // Flag de interrupciones
+    pub stop_flag: bool, // Flag de parada
     pub halt_flag: bool,
     pub cycle_counter: u16,
     pub tima_counter: u16,
-    /*
-    FLAGS: Bits 7-4 de F
+    pub ime: bool, // Interrupciones maestras habilitadas
+                   /*
+                   FLAGS: Bits 7-4 de F
 
-    ZF:bool,    // Si es 0
-    NF:bool,    // Si es resta
-    HF:bool,    // Si hubo carry del bit 3 al 4
-    CF:bool,    // Si hay acarreo fuera de rango */
+                   ZF:bool,    // Si es 0
+                   NF:bool,    // Si es resta
+                   HF:bool,    // Si hubo carry del bit 3 al 4
+                   CF:bool,    // Si hay acarreo fuera de rango */
 }
 
 impl CPU {
     pub fn new() -> CPU {
         CPU {
             registers: Registers::new(),
-            memory: [0; MEMORY_SIZE], // Inicializa la memoria a ceros
+            mmu: MMU::new(),
             ei_flag: false,
             stop_flag: false,
             halt_flag: false,
             cycle_counter: 0,
             tima_counter: 0,
+            ime: false,
         }
     }
 
     pub fn get_tac_frequency(&self) -> u16 {
-        match self.registers.TAC & 0b11 {
+        match self.mmu.read_byte(ControlRegisters::TAC) & 0b11 {
             0b00 => 256,
             0b01 => 4,
             0b10 => 16,
@@ -109,32 +104,51 @@ impl CPU {
             }
         }
     }
+    pub fn get_ime(&self) -> bool {
+        self.ime
+    }
+
+    pub fn set_ime(&mut self, value: bool) {
+        self.ime = value;
+    }
 
     pub fn get_tac_enabled(&self) -> bool {
-        (self.registers.TAC & 0b100) != 0
+        (self.mmu.read_byte(ControlRegisters::TAC) & 0b100) != 0
     }
 
     pub fn get_ie(&self, code: InterruptCode) -> bool {
-        (self.registers.IE & (1 << code as u8)) != 0
+        (self.mmu.read_byte(ControlRegisters::IE) & (1 << code as u8)) != 0
     }
 
     pub fn get_if(&self, code: InterruptCode) -> bool {
-        (self.registers.IF & (1 << code as u8)) != 0
+        (self.mmu.read_byte(ControlRegisters::IF) & (1 << code as u8)) != 0
     }
 
     pub fn set_ie(&mut self, code: InterruptCode, value: bool) {
         if value {
-            self.registers.IE |= 1 << code as u8;
+            self.mmu.write_byte(
+                ControlRegisters::IE,
+                self.mmu.read_byte(ControlRegisters::IE) | (1 << code as u8),
+            );
         } else {
-            self.registers.IE &= !(1 << code as u8);
+            self.mmu.write_byte(
+                ControlRegisters::IE,
+                self.mmu.read_byte(ControlRegisters::IE) & !(1 << code as u8),
+            );
         }
     }
 
     pub fn set_if(&mut self, code: InterruptCode, value: bool) {
         if value {
-            self.registers.IF |= 1 << code as u8;
+            self.mmu.write_byte(
+                ControlRegisters::IF,
+                self.mmu.read_byte(ControlRegisters::IF) | (1 << code as u8),
+            );
         } else {
-            self.registers.IF &= !(1 << code as u8);
+            self.mmu.write_byte(
+                ControlRegisters::IF,
+                self.mmu.read_byte(ControlRegisters::IF) & !(1 << code as u8),
+            );
         }
     }
 
@@ -166,18 +180,6 @@ impl CPU {
         self.registers.H = (value >> 8) as u8;
         self.registers.L = (value & 0xFF) as u8;
     }
-
-    /*  fn LD<T>(&mut self, to: impl Operand<T>, from: impl Operand<T>) {
-        let value = from.read(self);
-        to.write(self, value);
-    }
-
-    fn POP(&mut self, To: RegisterPair) {
-        let value = (self.memory[(self.SP + 1) as usize] as u16) << 8
-            | self.memory[self.SP as usize] as u16;
-        self.set_register_pair(To, value);
-        self.SP += 2;
-    }*/
     pub fn set_ZF(&mut self, value: bool) {
         self.registers.F = self.registers.F & 0b0111_1111 | (value as u8) << 7;
     }
@@ -398,14 +400,13 @@ impl CPU {
     }
 
     pub fn fetch_byte(&mut self) -> u8 {
-        let op = self.memory[self.registers.PC as usize];
+        let op = self.mmu.read_byte(self.registers.PC);
         self.registers.PC += 1;
         op
     }
 
     pub fn fetch_word(&mut self) -> u16 {
-        let op = (self.memory[self.registers.PC as usize] as u16)
-            | ((self.memory[(self.registers.PC + 1) as usize] as u16) << 8);
+        let op = self.mmu.read_word(self.registers.PC);
         self.registers.PC += 2;
         op
     }
@@ -490,16 +491,14 @@ impl CPU {
     }
 
     pub fn POP(&mut self) -> u16 {
-        let value = (self.memory[(self.registers.SP + 1) as usize] as u16) << 8
-            | self.memory[self.registers.SP as usize] as u16;
+        let value = self.mmu.read_word(self.registers.SP);
         self.registers.SP += 2;
         value
     }
 
     pub fn PUSH(&mut self, value: u16) {
         self.registers.SP -= 2;
-        self.memory[self.registers.SP as usize] = (value & 0xFF) as u8;
-        self.memory[(self.registers.SP + 1) as usize] = (value >> 8) as u8;
+        self.mmu.write_word(self.registers.SP, value);
     }
 
     pub fn RST(&mut self, address: u16) {
@@ -525,7 +524,10 @@ impl CPU {
     pub fn step(&mut self) {
         // Increment the DIV register
         if self.cycle_counter >= DIV_INCREMENT_RATE {
-            self.registers.DIV = self.registers.DIV.wrapping_add(1); // Increment the DIV register
+            self.mmu.write_byte(
+                ControlRegisters::DIV,
+                self.mmu.read_byte(ControlRegisters::DIV).wrapping_add(1),
+            );
             self.cycle_counter -= DIV_INCREMENT_RATE; // Reset the cycle counter
         }
 
@@ -533,15 +535,21 @@ impl CPU {
         if self.tima_counter >= self.get_tac_frequency() && self.get_tac_enabled() {
             // Checks overflow in TIMA and enable bit in TAC
             self.tima_counter -= self.get_tac_frequency(); // Reset the TIMA counter
-            let (result, overflow) = self.registers.TIMA.overflowing_add(1);
+            let (result, overflow) = self
+                .mmu
+                .read_byte(ControlRegisters::TIMA)
+                .overflowing_add(1);
 
             if overflow {
                 // Requesti interrupt and reset TIMA
                 self.set_if(InterruptCode::Timer, true);
-                self.registers.TIMA = self.registers.TMA;
+                self.mmu.write_byte(
+                    ControlRegisters::TIMA,
+                    self.mmu.read_byte(ControlRegisters::TMA),
+                );
             } else {
                 // Increment TIMA
-                self.registers.TIMA = result;
+                self.mmu.write_byte(ControlRegisters::TIMA, result);
             }
         }
 
@@ -557,40 +565,40 @@ impl CPU {
     fn handle_interrupts(&mut self) -> u16 {
         if self.ei_flag {
             self.ei_flag = false;
-            self.registers.IME = true;
+            self.ime = true;
         }
 
-        if self.registers.IME {
+        if self.ime {
             if self.get_if(InterruptCode::Vblank) && self.get_ie(InterruptCode::Vblank) {
                 // Check both IME and IF
-                self.registers.IME = false;
+                self.ime = false;
                 self.set_if(InterruptCode::Vblank, false); // Unset IME and IF
                 self.PUSH(self.registers.PC); // Push the current program counter onto the stack
                 self.registers.PC = 0x40; // Jump to the interrupt handler
                 return 5;
             } else if self.get_if(InterruptCode::Lcd) && self.get_ie(InterruptCode::Lcd) {
-                self.registers.IME = false;
+                self.ime = false;
                 self.set_if(InterruptCode::Lcd, false);
                 //cpu.nop() x2
                 self.PUSH(self.registers.PC);
                 self.registers.PC = 0x48;
                 return 5;
             } else if self.get_if(InterruptCode::Timer) && self.get_ie(InterruptCode::Timer) {
-                self.registers.IME = false;
+                self.ime = false;
                 self.set_if(InterruptCode::Timer, false);
                 //cpu.nop() x2
                 self.PUSH(self.registers.PC);
                 self.registers.PC = 0x50;
                 return 5;
             } else if self.get_if(InterruptCode::Serial) && self.get_ie(InterruptCode::Serial) {
-                self.registers.IME = false;
+                self.ime = false;
                 self.set_if(InterruptCode::Serial, false);
                 //cpu.nop() x2
                 self.PUSH(self.registers.PC);
                 self.registers.PC = 0x58;
                 return 5;
             } else if self.get_if(InterruptCode::Joypad) && self.get_ie(InterruptCode::Joypad) {
-                self.registers.IME = false;
+                self.ime = false;
                 self.set_if(InterruptCode::Joypad, false);
                 //cpu.nop() x2
                 self.PUSH(self.registers.PC);
