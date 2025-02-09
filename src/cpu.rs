@@ -26,6 +26,10 @@ pub struct Registers {
     pub IE: u8, // Interrupt Enable
     pub IF: u8, // Interrupt Flag
     pub IME: bool, // Interrupt master enable
+    pub DIV: u8, // Divider Register
+    pub TIMA: u8, // Timer counter
+    pub TMA: u8, // Timer modulo
+    pub TAC: u8, // Timer control
 }
 
 pub enum InterruptCode { 
@@ -53,6 +57,10 @@ impl Registers {
             IF: 0, // Interrupt Flag (Requests an interrupt) // 7 6 5 Joypad Serial Timer LCD V-Blank
             IR: 0, // Instruction register
             IME: false,
+            DIV: 0,
+            TIMA: 0, 
+            TMA: 0, 
+            TAC: 0,
         }
     }
 }
@@ -82,6 +90,20 @@ impl CPU {
             stop_flag: false,
             halt_flag: false,
         }
+    }
+
+    pub fn get_tac_frequency(&self) -> u16 {  
+        match self.registers.TAC & 0b11 {
+            0b00 => 256,
+            0b01 => 4,
+            0b10 => 16, 
+            0b11 => 64, 
+            _=> {panic!("Invalid TAC frecuency");} 
+        }
+    }
+
+    pub fn get_tac_enabled(&self) -> bool { 
+        (self.registers.TAC & 0b100) != 0
     }
 
     pub fn get_ie(&self, code: InterruptCode) -> bool { 
