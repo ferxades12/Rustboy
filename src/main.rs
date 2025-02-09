@@ -32,7 +32,7 @@ fn main() {
 
 fn handle_interrupts(cpu: &mut CPU){
     if cpu.registers.IME {
-        if cpu.get_if(cpu::InterruptCode::Vblank){                         // Check both IME and IF
+        if cpu.get_if(cpu::InterruptCode::Vblank) && cpu.get_ie(cpu::InterruptCode::Vblank){                         // Check both IME and IF
             cpu.registers.IME = false;                                           
             cpu.set_if(cpu::InterruptCode::Vblank, false);          // Unset IME and IF
             //cpu.nop() x2
@@ -41,7 +41,7 @@ fn handle_interrupts(cpu: &mut CPU){
 
 
         }
-        if cpu.get_if(cpu::InterruptCode::Lcd){
+        else if cpu.get_if(cpu::InterruptCode::Lcd)&& cpu.get_ie(cpu::InterruptCode::Lcd){
             cpu.registers.IME = false;
             cpu.set_if(cpu::InterruptCode::Lcd, false);
             //cpu.nop() x2
@@ -50,7 +50,7 @@ fn handle_interrupts(cpu: &mut CPU){
 
 
         }
-        if cpu.get_if(cpu::InterruptCode::Timer){
+        else if cpu.get_if(cpu::InterruptCode::Timer)&& cpu.get_ie(cpu::InterruptCode::Timer){
             cpu.registers.IME = false;
             cpu.set_if(cpu::InterruptCode::Timer, false);
             //cpu.nop() x2
@@ -59,7 +59,7 @@ fn handle_interrupts(cpu: &mut CPU){
 
 
         }
-        if cpu.get_if(cpu::InterruptCode::Serial){
+        else if cpu.get_if(cpu::InterruptCode::Serial)&& cpu.get_ie(cpu::InterruptCode::Serial){
             cpu.registers.IME = false;
             cpu.set_if(cpu::InterruptCode::Serial, false);
             //cpu.nop() x2
@@ -68,7 +68,7 @@ fn handle_interrupts(cpu: &mut CPU){
 
 
         }
-        if cpu.get_if(cpu::InterruptCode::Joypad){
+        else if cpu.get_if(cpu::InterruptCode::Joypad)&& cpu.get_ie(cpu::InterruptCode::Joypad){
             cpu.registers.IME = false;
             cpu.set_if(cpu::InterruptCode::Joypad, false);
             //cpu.nop() x2
