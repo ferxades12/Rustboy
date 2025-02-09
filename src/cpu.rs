@@ -1,3 +1,5 @@
+use crate::op_codes::execute_opcode;
+
 const MEMORY_SIZE: usize = 65536;
 const ROM_BANK_0: usize = 0x0000; // ROM Bank 0 (32KB) HOME BANK
 const ROM_BANK_1: usize = 0x4000; // ROM Bank 1 (32KB)
@@ -9,6 +11,8 @@ const OAM: usize = 0xFE00; // OAM (Sprites) (160 bytes) also tiles
                            //Space not used
 const IO_REGISTERS: usize = 0xFF00; // IO Registros (80 bytes)
 const HIGH_RAM: usize = 0xFF80; // Memoria de alto rendimiento (128 bytes) //Acceso un ciclo mas rapido
+
+const DIV_INCREMENT_RATE: u16 = 256; // 16384 Hz
 
 pub struct Registers {
     pub A: u8,
@@ -70,6 +74,8 @@ pub struct CPU {
     pub ei_flag: bool,             // Flag de interrupciones
     pub stop_flag: bool,           // Flag de parada
     pub halt_flag: bool,
+    pub cycle_counter: u16,
+    pub tima_counter: u16,
     /*
     FLAGS: Bits 7-4 de F
 
@@ -87,6 +93,8 @@ impl CPU {
             ei_flag: false,
             stop_flag: false,
             halt_flag: false,
+            cycle_counter: 0,
+            tima_counter: 0,
         }
     }
 
@@ -512,5 +520,84 @@ impl CPU {
             self.PUSH(self.registers.PC);
             self.registers.PC = address;
         }
+    }
+
+    pub fn step(&mut self) {
+        // Increment the DIV register
+        if self.cycle_counter >= DIV_INCREMENT_RATE {
+            self.registers.DIV = self.registers.DIV.wrapping_add(1); // Increment the DIV register
+            self.cycle_counter -= DIV_INCREMENT_RATE; // Reset the cycle counter
+        }
+
+        // Increment the TIMA register
+        if self.tima_counter >= self.get_tac_frequency() && self.get_tac_enabled() {
+            // Checks overflow in TIMA and enable bit in TAC
+            self.tima_counter -= self.get_tac_frequency(); // Reset the TIMA counter
+            let (result, overflow) = self.registers.TIMA.overflowing_add(1);
+
+            if overflow {
+                // Requesti interrupt and reset TIMA
+                self.set_if(InterruptCode::Timer, true);
+                self.registers.TIMA = self.registers.TMA;
+            } else {
+                // Increment TIMA
+                self.registers.TIMA = result;
+            }
+        }
+
+        let cycles = self.handle_interrupts();
+        self.tima_counter += cycles;
+        self.cycle_counter += cycles;
+
+        let cycles = execute_opcode(self) as u16;
+        self.tima_counter += cycles;
+        self.cycle_counter += cycles;
+    }
+
+    fn handle_interrupts(&mut self) -> u16 {
+        if self.ei_flag {
+            self.ei_flag = false;
+            self.registers.IME = true;
+        }
+
+        if self.registers.IME {
+            if self.get_if(InterruptCode::Vblank) && self.get_ie(InterruptCode::Vblank) {
+                // Check both IME and IF
+                self.registers.IME = false;
+                self.set_if(InterruptCode::Vblank, false); // Unset IME and IF
+                self.PUSH(self.registers.PC); // Push the current program counter onto the stack
+                self.registers.PC = 0x40; // Jump to the interrupt handler
+                return 5;
+            } else if self.get_if(InterruptCode::Lcd) && self.get_ie(InterruptCode::Lcd) {
+                self.registers.IME = false;
+                self.set_if(InterruptCode::Lcd, false);
+                //cpu.nop() x2
+                self.PUSH(self.registers.PC);
+                self.registers.PC = 0x48;
+                return 5;
+            } else if self.get_if(InterruptCode::Timer) && self.get_ie(InterruptCode::Timer) {
+                self.registers.IME = false;
+                self.set_if(InterruptCode::Timer, false);
+                //cpu.nop() x2
+                self.PUSH(self.registers.PC);
+                self.registers.PC = 0x50;
+                return 5;
+            } else if self.get_if(InterruptCode::Serial) && self.get_ie(InterruptCode::Serial) {
+                self.registers.IME = false;
+                self.set_if(InterruptCode::Serial, false);
+                //cpu.nop() x2
+                self.PUSH(self.registers.PC);
+                self.registers.PC = 0x58;
+                return 5;
+            } else if self.get_if(InterruptCode::Joypad) && self.get_ie(InterruptCode::Joypad) {
+                self.registers.IME = false;
+                self.set_if(InterruptCode::Joypad, false);
+                //cpu.nop() x2
+                self.PUSH(self.registers.PC);
+                self.registers.PC = 0x60;
+                return 5;
+            }
+        }
+        return 0;
     }
 }
