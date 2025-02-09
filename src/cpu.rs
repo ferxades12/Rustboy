@@ -1,4 +1,3 @@
-
 const MEMORY_SIZE: usize = 65536;
 const ROM_BANK_0: usize = 0x0000; // ROM Bank 0 (32KB) HOME BANK
 const ROM_BANK_1: usize = 0x4000; // ROM Bank 1 (32KB)
@@ -22,22 +21,22 @@ pub struct Registers {
     pub L: u8,
     pub PC: u16,
     pub SP: u16,
-    pub IR: u8, // Instruction register
-    pub IE: u8, // Interrupt Enable
-    pub IF: u8, // Interrupt Flag
+    pub IR: u8,    // Instruction register
+    pub IE: u8,    // Interrupt Enable
+    pub IF: u8,    // Interrupt Flag
     pub IME: bool, // Interrupt master enable
-    pub DIV: u8, // Divider Register
-    pub TIMA: u8, // Timer counter
-    pub TMA: u8, // Timer modulo
-    pub TAC: u8, // Timer control
+    pub DIV: u8,   // Divider Register
+    pub TIMA: u8,  // Timer counter
+    pub TMA: u8,   // Timer modulo
+    pub TAC: u8,   // Timer control
 }
 
-pub enum InterruptCode { 
-    Vblank = 0, 
-    Lcd = 1, 
+pub enum InterruptCode {
+    Vblank = 0,
+    Lcd = 1,
     Timer = 2,
     Serial = 3,
-    Joypad = 4, 
+    Joypad = 4,
 }
 
 impl Registers {
@@ -53,13 +52,13 @@ impl Registers {
             L: 0,
             PC: 0,
             SP: 0,
-            IE: 0, // Interrupt Enable // 7 6 5 Joypad Serial Timer LCD V-Blank    
+            IE: 0, // Interrupt Enable // 7 6 5 Joypad Serial Timer LCD V-Blank
             IF: 0, // Interrupt Flag (Requests an interrupt) // 7 6 5 Joypad Serial Timer LCD V-Blank
             IR: 0, // Instruction register
             IME: false,
             DIV: 0,
-            TIMA: 0, 
-            TMA: 0, 
+            TIMA: 0,
+            TMA: 0,
             TAC: 0,
         }
     }
@@ -68,17 +67,16 @@ impl Registers {
 pub struct CPU {
     pub registers: Registers,
     pub memory: [u8; MEMORY_SIZE], // Memoria de la CPU
-    pub ei_flag:bool, // Flag de interrupciones
-    pub stop_flag:bool, // Flag de parada 
-    pub halt_flag:bool,
+    pub ei_flag: bool,             // Flag de interrupciones
+    pub stop_flag: bool,           // Flag de parada
+    pub halt_flag: bool,
+    /*
+    FLAGS: Bits 7-4 de F
 
-                               /*
-                               FLAGS: Bits 7-4 de F
-
-                               ZF:bool,    // Si es 0
-                               NF:bool,    // Si es resta
-                               HF:bool,    // Si hubo carry del bit 3 al 4
-                               CF:bool,    // Si hay acarreo fuera de rango */
+    ZF:bool,    // Si es 0
+    NF:bool,    // Si es resta
+    HF:bool,    // Si hubo carry del bit 3 al 4
+    CF:bool,    // Si hay acarreo fuera de rango */
 }
 
 impl CPU {
@@ -92,29 +90,31 @@ impl CPU {
         }
     }
 
-    pub fn get_tac_frequency(&self) -> u16 {  
+    pub fn get_tac_frequency(&self) -> u16 {
         match self.registers.TAC & 0b11 {
             0b00 => 256,
             0b01 => 4,
-            0b10 => 16, 
-            0b11 => 64, 
-            _=> {panic!("Invalid TAC frecuency");} 
+            0b10 => 16,
+            0b11 => 64,
+            _ => {
+                panic!("Invalid TAC frecuency");
+            }
         }
     }
 
-    pub fn get_tac_enabled(&self) -> bool { 
+    pub fn get_tac_enabled(&self) -> bool {
         (self.registers.TAC & 0b100) != 0
     }
 
-    pub fn get_ie(&self, code: InterruptCode) -> bool { 
+    pub fn get_ie(&self, code: InterruptCode) -> bool {
         (self.registers.IE & (1 << code as u8)) != 0
     }
- 
-    pub fn get_if(&self, code: InterruptCode) -> bool { 
+
+    pub fn get_if(&self, code: InterruptCode) -> bool {
         (self.registers.IF & (1 << code as u8)) != 0
     }
 
-    pub fn set_ie(&mut self, code: InterruptCode, value: bool) { 
+    pub fn set_ie(&mut self, code: InterruptCode, value: bool) {
         if value {
             self.registers.IE |= 1 << code as u8;
         } else {
@@ -122,7 +122,7 @@ impl CPU {
         }
     }
 
-    pub fn set_if(&mut self, code: InterruptCode, value: bool) { 
+    pub fn set_if(&mut self, code: InterruptCode, value: bool) {
         if value {
             self.registers.IF |= 1 << code as u8;
         } else {
@@ -130,7 +130,6 @@ impl CPU {
         }
     }
 
-    
     pub fn get_af(&self) -> u16 {
         ((self.registers.A as u16) << 8) | (self.registers.F as u16)
     }
@@ -197,7 +196,6 @@ impl CPU {
         (self.registers.F & 0b0001_0000) != 0
     }
 
-
     pub fn update_flags(&mut self, zero: bool, carry: bool, half_carry: bool, substract: bool) {
         self.registers.F = 0;
         if zero {
@@ -247,7 +245,12 @@ impl CPU {
         let (result, carry1) = n1.overflowing_add(n2);
         let (result, carry2) = result.overflowing_add(carry_prev);
 
-        self.update_flags(result == 0, carry1 | carry2, (n1 & 0x0F) + (n2 & 0x0F) + carry_prev > 0x0F, false);
+        self.update_flags(
+            result == 0,
+            carry1 | carry2,
+            (n1 & 0x0F) + (n2 & 0x0F) + carry_prev > 0x0F,
+            false,
+        );
 
         result
     }
@@ -258,7 +261,12 @@ impl CPU {
         let (result, carry1) = n1.overflowing_sub(n2);
         let (result, carry2) = result.overflowing_sub(carry_prev);
 
-        self.update_flags(result == 0, carry1 | carry2, (n1 & 0x0F) < ((n2 & 0x0F) + carry_prev), true);
+        self.update_flags(
+            result == 0,
+            carry1 | carry2,
+            (n1 & 0x0F) < ((n2 & 0x0F) + carry_prev),
+            true,
+        );
 
         result
     }
@@ -278,31 +286,37 @@ impl CPU {
         self.update_flags(self.registers.A == 0, false, false, false);
     }
 
-    pub fn CP(&mut self, num: u8) { // Compara. Comprueba la resta pero no guarda el resultado
+    pub fn CP(&mut self, num: u8) {
+        // Compara. Comprueba la resta pero no guarda el resultado
         let (result, carry) = self.registers.A.overflowing_sub(num);
         self.update_flags(
             result == 0,
             carry,
             (self.registers.A & 0x0F) + (num & 0x0F) > 0x0F,
-            true, 
+            true,
         );
     }
 
-    pub fn INC(&mut self, value:u8) -> u8 {
+    pub fn INC(&mut self, value: u8) -> u8 {
         let result = value.wrapping_add(1);
-        self.update_flags(result as u8 == 0, self.get_CF(), (value & 0x0F) + 1 > 0x0F, false);
+        self.update_flags(
+            result as u8 == 0,
+            self.get_CF(),
+            (value & 0x0F) + 1 > 0x0F,
+            false,
+        );
 
         result
     }
 
-    pub fn DEC(&mut self, value:u8) -> u8 {
+    pub fn DEC(&mut self, value: u8) -> u8 {
         let result = value.wrapping_sub(1);
         self.update_flags(result as u8 == 0, self.get_CF(), (value & 0x0F) < 1, true);
 
         result
     }
 
-    pub fn RLC(&mut self, value:u8) -> u8 { 
+    pub fn RLC(&mut self, value: u8) -> u8 {
         let seven = value >> 7 & 1 != 0;
         let result = (value << 1) | (seven as u8);
         self.update_flags(result == 0, seven, false, false);
@@ -327,40 +341,40 @@ impl CPU {
         self.set_ZF(false);
     }
 
-    pub fn RRC(&mut self, value:u8) -> u8{
+    pub fn RRC(&mut self, value: u8) -> u8 {
         let bit = 0b0000_0001 & value;
         let result = (value >> 1) | (bit << 7);
         self.update_flags(result == 0, bit != 0, false, false);
         result
     }
-    
+
     pub fn RRCA(&mut self) {
         self.registers.A = self.RRC(self.registers.A);
         self.set_ZF(false);
     }
 
-    pub fn RR(&mut self, value:u8) -> u8{
+    pub fn RR(&mut self, value: u8) -> u8 {
         let bit = 0b0000_0001 & value;
-        let carry = if self.get_CF() {1} else {0};
+        let carry = if self.get_CF() { 1 } else { 0 };
         let result = (value >> 1) | (carry << 7);
         self.update_flags(result == 0, bit != 0, false, false);
 
         result
     }
 
-    pub fn RRA(&mut self){
+    pub fn RRA(&mut self) {
         self.registers.A = self.RR(self.registers.A);
         self.set_ZF(false);
     }
 
-    pub fn SLA(&mut self, value:u8) -> u8{
+    pub fn SLA(&mut self, value: u8) -> u8 {
         let seven = value >> 7 & 1 != 0;
         let result = value << 1;
         self.update_flags(result == 0, seven, false, false);
         result
     }
 
-    pub fn SRA(&mut self, value:u8) -> u8{
+    pub fn SRA(&mut self, value: u8) -> u8 {
         let seven = value & 0b1000_0000;
         let bit = value & 0b0000_0001;
         let result = (value >> 1) | seven;
@@ -368,7 +382,7 @@ impl CPU {
         result
     }
 
-    pub fn SRL(&mut self, value:u8) -> u8{
+    pub fn SRL(&mut self, value: u8) -> u8 {
         let bit = value & 0b0000_0001;
         let result = value >> 1;
         self.update_flags(result == 0, bit != 0, false, false);
@@ -388,39 +402,40 @@ impl CPU {
         op
     }
 
-    pub fn JR (&mut self, condition: bool) {
-        let offset:i8 = self.fetch_byte() as i8;
+    pub fn JR(&mut self, condition: bool) {
+        let offset: i8 = self.fetch_byte() as i8;
         if condition {
             self.registers.PC = (self.registers.PC as i32 + offset as i32) as u16;
         }
     }
 
-    pub fn JP(&mut self,  condition: bool){
+    pub fn JP(&mut self, condition: bool) {
         let address = self.fetch_word();
         if condition {
             self.registers.PC = address;
         }
     }
 
-    pub fn RES(&mut self, bit:u8, num:u8) -> u8 {
+    pub fn RES(&mut self, bit: u8, num: u8) -> u8 {
         num & !(1 << bit)
     }
 
-    pub fn SET(&mut self, bit:u8, num:u8) -> u8{
+    pub fn SET(&mut self, bit: u8, num: u8) -> u8 {
         num | (1 << bit)
     }
 
-    pub fn BIT(&mut self, bit:u8, num:u8){
+    pub fn BIT(&mut self, bit: u8, num: u8) {
         let res = (num & (1 << bit)) == 0;
 
         self.update_flags(res, self.get_CF(), true, false);
     }
 
-    pub fn DAA(&mut self) { // Fumada que no se usa nunca. Generated by Chat-GPT
+    pub fn DAA(&mut self) {
+        // Fumada que no se usa nunca. Generated by Chat-GPT
         let mut a = self.registers.A;
         let mut adjust = 0;
         let mut carry = self.get_CF();
-    
+
         if self.get_CF() || a > 0x99 {
             adjust |= 0x60;
             carry = true; // CF debe activarse si se ajusta por 0x60
@@ -428,25 +443,25 @@ impl CPU {
         if self.get_HF() || (a & 0x0F) > 0x09 {
             adjust |= 0x06;
         }
-    
+
         if !self.get_NF() {
             a = a.wrapping_add(adjust);
         } else {
             a = a.wrapping_sub(adjust);
         }
-    
+
         self.update_flags(a == 0, carry, false, self.get_NF());
         self.registers.A = a;
     }
-    
-    pub fn CPL(&mut self){
+
+    pub fn CPL(&mut self) {
         self.registers.A = !self.registers.A;
 
         self.set_NF(true);
         self.set_HF(true);
     }
 
-    pub fn SWAP(&mut self, value:u8) -> u8{
+    pub fn SWAP(&mut self, value: u8) -> u8 {
         let low = value & 0x0F;
         let high = value & 0xF0;
         let res = (low << 4) | (high >> 4);
@@ -454,18 +469,18 @@ impl CPU {
         res
     }
 
-    pub fn CCF(&mut self){
+    pub fn CCF(&mut self) {
         self.set_CF(!self.get_CF());
         self.set_NF(false);
         self.set_HF(false);
     }
 
-    pub fn SCF(&mut self){
+    pub fn SCF(&mut self) {
         self.set_CF(true);
         self.set_NF(false);
         self.set_HF(false);
     }
-    
+
     pub fn POP(&mut self) -> u16 {
         let value = (self.memory[(self.registers.SP + 1) as usize] as u16) << 8
             | self.memory[self.registers.SP as usize] as u16;
@@ -473,31 +488,29 @@ impl CPU {
         value
     }
 
-    pub fn PUSH(&mut self, value:u16){
+    pub fn PUSH(&mut self, value: u16) {
         self.registers.SP -= 2;
         self.memory[self.registers.SP as usize] = (value & 0xFF) as u8;
         self.memory[(self.registers.SP + 1) as usize] = (value >> 8) as u8;
     }
 
-    pub fn RST(&mut self, address: u16){
+    pub fn RST(&mut self, address: u16) {
         self.PUSH(self.registers.PC.wrapping_add(1));
         self.registers.PC = address;
     }
 
-    pub fn RET(&mut self, condition: bool){
-        if condition{
+    pub fn RET(&mut self, condition: bool) {
+        if condition {
             self.registers.PC = self.POP();
         }
     }
 
-    pub fn CALL(&mut self, condition: bool){
+    pub fn CALL(&mut self, condition: bool) {
         let address = self.fetch_word();
 
-        if condition{
+        if condition {
             self.PUSH(self.registers.PC);
             self.registers.PC = address;
         }
     }
-
-
 }
