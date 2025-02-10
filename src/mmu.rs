@@ -36,7 +36,7 @@ impl MMU {
 
     pub fn read_word(&self, address: u16) -> u16 {
         let low_byte = self.read_byte(address) as u16;
-        let high_byte = self.read_byte(address + 1) as u16;
+        let high_byte = self.read_byte(address.wrapping_add(1)) as u16;
 
         (high_byte << 8) | low_byte
     }
