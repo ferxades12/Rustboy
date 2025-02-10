@@ -1,7 +1,7 @@
 use crate::mmu::MMU;
 use crate::op_codes::execute_opcode;
 
-const DIV_INCREMENT_RATE: u16 = 256; // 16384 Hz
+const DIV_INCREMENT_RATE: u32 = 256; // 16384 Hz
 
 pub struct Registers {
     pub A: u8,
@@ -64,8 +64,8 @@ pub struct CPU {
     pub ei_flag: bool,   // Flag de interrupciones
     pub stop_flag: bool, // Flag de parada
     pub halt_flag: bool,
-    pub cycle_counter: u16,
-    pub tima_counter: u16,
+    pub cycle_counter: u32,
+    pub tima_counter: u32,
     pub ime: bool, // Interrupciones maestras habilitadas
 }
 
@@ -83,7 +83,7 @@ impl CPU {
         }
     }
 
-    pub fn get_tac_frequency(&self) -> u16 {
+    pub fn get_tac_frequency(&self) -> u32 {
         match self.mmu.read_byte(ControlRegisters::TAC as u16) & 0b11 {
             0b00 => 256,
             0b01 => 4,
@@ -511,7 +511,7 @@ impl CPU {
         }
     }
 
-    pub fn step(&mut self) {
+    pub fn step(&mut self) -> u32 {
         // Increment the DIV register
         if self.cycle_counter >= DIV_INCREMENT_RATE {
             self.mmu.write_byte(
@@ -545,16 +545,16 @@ impl CPU {
             }
         }
 
-        let cycles = self.handle_interrupts();
-        self.tima_counter += cycles;
-        self.cycle_counter += cycles;
+        let mut cycles = self.handle_interrupts();
 
-        let cycles = execute_opcode(self) as u16;
-        self.tima_counter += cycles;
-        self.cycle_counter += cycles;
+        cycles += execute_opcode(self) as u32;
+        self.tima_counter = self.tima_counter.wrapping_add(cycles);
+        self.cycle_counter = self.cycle_counter.wrapping_add(cycles);
+
+        cycles
     }
 
-    fn handle_interrupts(&mut self) -> u16 {
+    fn handle_interrupts(&mut self) -> u32 {
         if self.ei_flag {
             self.ei_flag = false;
             self.ime = true;

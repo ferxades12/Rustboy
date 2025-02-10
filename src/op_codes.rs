@@ -2,6 +2,7 @@ use crate::CPU;
 
 pub fn execute_opcode(cpu: &mut CPU) -> u8 {
     let opcode = cpu.fetch_byte();
+    //println!("opcode: {:02X}", opcode);
     match opcode {
         0x00 => 1,
         0x01 => {
@@ -1270,10 +1271,18 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xE8 => {
             // ADD SP, i8
-            let value: i8 = cpu.fetch_byte() as i8;
-            let (result, carry) = cpu.registers.SP.overflowing_add(value as u16);
-            let half_carry = (cpu.registers.SP & 0xF) + ((value as u16) & 0xF) > 0xF;
+            let value = cpu.fetch_byte() as i8 as i16; // Convertir a i16 para la suma correcta
+            let sp = cpu.registers.SP as i16;
+            let result = sp.wrapping_add(value) as u16;
+
+            // Calcular los flags de carry y half-carry
+            let carry = ((sp & 0xFF) + (value & 0xFF)) > 0xFF;
+            let half_carry = ((sp & 0xF) + (value & 0xF)) > 0xF;
+
+            // Actualizar los flags
             cpu.update_flags(false, carry, half_carry, false);
+
+            // Actualizar el registro SP
             cpu.registers.SP = result;
             4
         }
@@ -1339,11 +1348,19 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
             4
         }
         0xF8 => {
-            // LD HL, SP + i8
-            let value: i8 = cpu.fetch_byte() as i8;
-            let (result, carry) = cpu.registers.SP.overflowing_add(value as u16);
-            let half_carry = (cpu.registers.SP & 0xF) + ((value as u16) & 0xF) > 0xF;
+            // LD HL, SP+i8
+            let value = cpu.fetch_byte() as i8 as i16;
+            let sp = cpu.registers.SP as i16;
+            let result = sp.wrapping_add(value) as u16;
+
+            // Calcular los flags de carry y half-carry
+            let carry = ((sp & 0xFF) + (value & 0xFF)) > 0xFF;
+            let half_carry = ((sp & 0xF) + (value & 0xF)) > 0xF;
+
+            // Actualizar los flags
             cpu.update_flags(false, carry, half_carry, false);
+
+            // Actualizar el registro HL
             cpu.set_hl(result);
             3
         }

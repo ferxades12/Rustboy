@@ -1,4 +1,4 @@
-use crate::cpu::ControlRegisters;
+use std::{fs::File, io::Read};
 
 const MEMORY_SIZE: usize = 65536;
 const ROM_BANK_0: usize = 0x0000; // ROM Bank 0 (32KB) HOME BANK
@@ -27,6 +27,10 @@ impl MMU {
         self.memory[address as usize]
     }
     pub fn write_byte(&mut self, address: u16, value: u8) {
+        if address == 0xFF01 && self.memory[0xFF02] == 0x81 {
+            print!("{}", value as char);
+            self.memory[0xFF02] = 0x00;
+        }
         self.memory[address as usize] = value;
     }
 
@@ -43,5 +47,11 @@ impl MMU {
 
         self.write_byte(address, low_byte);
         self.write_byte(address + 1, high_byte);
+    }
+
+    pub fn read_rom(&mut self, file_path: &str) {
+        let mut file = File::open(file_path).expect("Error al abrir la ROM");
+        file.read(&mut self.memory[..])
+            .expect("Error al cargar la ROM en memoria");
     }
 }
