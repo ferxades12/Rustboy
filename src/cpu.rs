@@ -492,7 +492,7 @@ impl CPU {
     }
 
     pub fn RST(&mut self, address: u16) {
-        self.PUSH(self.registers.PC.wrapping_add(1));
+        self.PUSH(self.registers.PC);
         self.registers.PC = address;
     }
 
