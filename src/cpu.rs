@@ -292,7 +292,7 @@ impl CPU {
         self.update_flags(
             result == 0,
             carry,
-            (self.registers.A & 0x0F) + (num & 0x0F) > 0x0F,
+            (self.registers.A & 0xF) < (num & 0xF),
             true,
         );
     }
