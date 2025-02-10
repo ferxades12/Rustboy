@@ -1,6 +1,7 @@
 use crate::cpu::CPU;
 
 mod cpu;
+mod mmu;
 mod op_codes;
 
 fn main() {

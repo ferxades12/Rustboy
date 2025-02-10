@@ -1,17 +1,6 @@
 use crate::mmu::MMU;
 use crate::op_codes::execute_opcode;
 
-const ROM_BANK_0: usize = 0x0000; // ROM Bank 0 (32KB) HOME BANK
-const ROM_BANK_1: usize = 0x4000; // ROM Bank 1 (32KB)
-const VRAM: usize = 0x8000; // VRAM (8KB) Background tiles
-const CARTRIDGE_RAM: usize = 0xA000;
-const WORK_RAM: usize = 0xC000; // RAM Bank 0 (8KB)
-                                // Space not used
-const OAM: usize = 0xFE00; // OAM (Sprites) (160 bytes) also tiles
-                           //Space not used
-const IO_REGISTERS: usize = 0xFF00; // IO Registros (80 bytes)
-const HIGH_RAM: usize = 0xFF80; // Memoria de alto rendimiento (128 bytes) //Acceso un ciclo mas rapido
-
 const DIV_INCREMENT_RATE: u16 = 256; // 16384 Hz
 
 pub struct Registers {
@@ -57,6 +46,14 @@ impl Registers {
             L: 0x4D,
             PC: 0x0100, // Start address of the program
             SP: 0xFFFE, // Initial stack pointer
+
+                        /*
+                        FLAGS: Bits 7-4 de F
+
+                        ZF:bool,    // Si es 0
+                        NF:bool,    // Si es resta
+                        HF:bool,    // Si hubo carry del bit 3 al 4
+                        CF:bool,    // Si hay acarreo fuera de rango */
         }
     }
 }
@@ -70,13 +67,6 @@ pub struct CPU {
     pub cycle_counter: u16,
     pub tima_counter: u16,
     pub ime: bool, // Interrupciones maestras habilitadas
-                   /*
-                   FLAGS: Bits 7-4 de F
-
-                   ZF:bool,    // Si es 0
-                   NF:bool,    // Si es resta
-                   HF:bool,    // Si hubo carry del bit 3 al 4
-                   CF:bool,    // Si hay acarreo fuera de rango */
 }
 
 impl CPU {
@@ -94,7 +84,7 @@ impl CPU {
     }
 
     pub fn get_tac_frequency(&self) -> u16 {
-        match self.mmu.read_byte(ControlRegisters::TAC) & 0b11 {
+        match self.mmu.read_byte(ControlRegisters::TAC as u16) & 0b11 {
             0b00 => 256,
             0b01 => 4,
             0b10 => 16,
@@ -113,27 +103,27 @@ impl CPU {
     }
 
     pub fn get_tac_enabled(&self) -> bool {
-        (self.mmu.read_byte(ControlRegisters::TAC) & 0b100) != 0
+        (self.mmu.read_byte(ControlRegisters::TAC as u16) & 0b100) != 0
     }
 
     pub fn get_ie(&self, code: InterruptCode) -> bool {
-        (self.mmu.read_byte(ControlRegisters::IE) & (1 << code as u8)) != 0
+        (self.mmu.read_byte(ControlRegisters::IE as u16) & (1 << code as u8)) != 0
     }
 
     pub fn get_if(&self, code: InterruptCode) -> bool {
-        (self.mmu.read_byte(ControlRegisters::IF) & (1 << code as u8)) != 0
+        (self.mmu.read_byte(ControlRegisters::IF as u16) & (1 << code as u8)) != 0
     }
 
     pub fn set_ie(&mut self, code: InterruptCode, value: bool) {
         if value {
             self.mmu.write_byte(
-                ControlRegisters::IE,
-                self.mmu.read_byte(ControlRegisters::IE) | (1 << code as u8),
+                ControlRegisters::IE as u16,
+                self.mmu.read_byte(ControlRegisters::IE as u16) | (1 << code as u8),
             );
         } else {
             self.mmu.write_byte(
-                ControlRegisters::IE,
-                self.mmu.read_byte(ControlRegisters::IE) & !(1 << code as u8),
+                ControlRegisters::IE as u16,
+                self.mmu.read_byte(ControlRegisters::IE as u16) & !(1 << code as u8),
             );
         }
     }
@@ -141,13 +131,13 @@ impl CPU {
     pub fn set_if(&mut self, code: InterruptCode, value: bool) {
         if value {
             self.mmu.write_byte(
-                ControlRegisters::IF,
-                self.mmu.read_byte(ControlRegisters::IF) | (1 << code as u8),
+                ControlRegisters::IF as u16,
+                self.mmu.read_byte(ControlRegisters::IF as u16) | (1 << code as u8),
             );
         } else {
             self.mmu.write_byte(
-                ControlRegisters::IF,
-                self.mmu.read_byte(ControlRegisters::IF) & !(1 << code as u8),
+                ControlRegisters::IF as u16,
+                self.mmu.read_byte(ControlRegisters::IF as u16) & !(1 << code as u8),
             );
         }
     }
@@ -525,8 +515,10 @@ impl CPU {
         // Increment the DIV register
         if self.cycle_counter >= DIV_INCREMENT_RATE {
             self.mmu.write_byte(
-                ControlRegisters::DIV,
-                self.mmu.read_byte(ControlRegisters::DIV).wrapping_add(1),
+                ControlRegisters::DIV as u16,
+                self.mmu
+                    .read_byte(ControlRegisters::DIV as u16)
+                    .wrapping_add(1),
             );
             self.cycle_counter -= DIV_INCREMENT_RATE; // Reset the cycle counter
         }
@@ -537,19 +529,19 @@ impl CPU {
             self.tima_counter -= self.get_tac_frequency(); // Reset the TIMA counter
             let (result, overflow) = self
                 .mmu
-                .read_byte(ControlRegisters::TIMA)
+                .read_byte(ControlRegisters::TIMA as u16)
                 .overflowing_add(1);
 
             if overflow {
                 // Requesti interrupt and reset TIMA
                 self.set_if(InterruptCode::Timer, true);
                 self.mmu.write_byte(
-                    ControlRegisters::TIMA,
-                    self.mmu.read_byte(ControlRegisters::TMA),
+                    ControlRegisters::TIMA as u16,
+                    self.mmu.read_byte(ControlRegisters::TMA as u16),
                 );
             } else {
                 // Increment TIMA
-                self.mmu.write_byte(ControlRegisters::TIMA, result);
+                self.mmu.write_byte(ControlRegisters::TIMA as u16, result);
             }
         }
 

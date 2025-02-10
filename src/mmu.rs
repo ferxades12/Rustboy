@@ -1,4 +1,16 @@
+use crate::cpu::ControlRegisters;
+
 const MEMORY_SIZE: usize = 65536;
+const ROM_BANK_0: usize = 0x0000; // ROM Bank 0 (32KB) HOME BANK
+const ROM_BANK_1: usize = 0x4000; // ROM Bank 1 (32KB)
+const VRAM: usize = 0x8000; // VRAM (8KB) Background tiles
+const CARTRIDGE_RAM: usize = 0xA000;
+const WORK_RAM: usize = 0xC000; // RAM Bank 0 (8KB)
+                                // Space not used
+const OAM: usize = 0xFE00; // OAM (Sprites) (160 bytes) also tiles
+                           //Space not used
+const IO_REGISTERS: usize = 0xFF00; // IO Registros (80 bytes)
+const HIGH_RAM: usize = 0xFF80; // Memoria de alto rendimiento (128 bytes) //Acceso un ciclo mas rapido
 
 pub struct MMU {
     pub memory: [u8; MEMORY_SIZE], // Memoria de la CPU
