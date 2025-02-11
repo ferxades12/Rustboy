@@ -1288,7 +1288,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xE9 => {
             // JP HL
-            cpu.JP(false);
+            cpu.registers.PC = cpu.get_hl();
             1
         }
         0xEA => {
@@ -1316,7 +1316,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xF1 => {
             // POP AF
-            let value = cpu.POP();
+            let value = cpu.POP() & 0xFFF0;
             cpu.set_af(value);
             3
         }
