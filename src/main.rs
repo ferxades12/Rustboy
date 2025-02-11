@@ -25,8 +25,6 @@ fn main() {
         let mut cycles_elapsed: u32 = 0;
 
         while cycles_elapsed < CYCLES_PER_FRAME {
-            // log con el formato : 01 F: B0 B: 00 C: 13 D: 00 E: D8 H: 01 L: 4D SP: FFFE PC: 00:0101  (mem[pc] mem[pc+1] mem[pc+2] mem[pc+3])
-            //print!("{:02X} F: {:02X} B: {:02X} C: {:02X} D: {:02X} E: {:02X} H: {:02X} L: {:02X} SP: {:04X} PC: {:04X}  ({:02X} {:02X} {:02X} {:02X}) ", cpu.registers.A, cpu.registers.F, cpu.registers.B, cpu.registers.C, cpu.registers.D, cpu.registers.E, cpu.registers.H, cpu.registers.L, cpu.registers.SP, cpu.registers.PC, cpu.mmu.read_byte(cpu.registers.PC), cpu.mmu.read_byte(cpu.registers.PC + 1), cpu.mmu.read_byte(cpu.registers.PC + 2), cpu.mmu.read_byte(cpu.registers.PC + 3));
             cycles_elapsed += cpu.step() as u32;
         }
 

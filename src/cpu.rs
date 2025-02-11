@@ -64,7 +64,7 @@ pub struct CPU {
     pub ei_flag: bool,   // Flag de interrupciones
     pub stop_flag: bool, // Flag de parada
     pub halt_flag: bool,
-    pub cycle_counter: u32,
+    pub div_counter: u32,
     pub tima_counter: u32,
     pub ime: bool, // Interrupciones maestras habilitadas
 }
@@ -77,7 +77,7 @@ impl CPU {
             ei_flag: false,
             stop_flag: false,
             halt_flag: false,
-            cycle_counter: 0,
+            div_counter: 0,
             tima_counter: 0,
             ime: false,
         }
@@ -85,10 +85,10 @@ impl CPU {
 
     pub fn get_tac_frequency(&self) -> u32 {
         match self.mmu.read_byte(ControlRegisters::TAC as u16) & 0b11 {
-            0b00 => 256,
-            0b01 => 4,
-            0b10 => 16,
-            0b11 => 64,
+            0b00 => 1024,
+            0b01 => 16,
+            0b10 => 64,
+            0b11 => 256,
             _ => {
                 panic!("Invalid TAC frecuency");
             }
@@ -509,14 +509,14 @@ impl CPU {
     }
 
     pub fn increment_div_register(&mut self) {
-        if self.cycle_counter >= DIV_INCREMENT_RATE {
+        if self.div_counter >= DIV_INCREMENT_RATE {
             self.mmu.write_byte(
                 ControlRegisters::DIV as u16,
                 self.mmu
                     .read_byte(ControlRegisters::DIV as u16)
                     .wrapping_add(1),
             );
-            self.cycle_counter -= DIV_INCREMENT_RATE; // Reset the cycle counter
+            self.div_counter -= DIV_INCREMENT_RATE; // Reset the cycle counter
         }
     }
 
@@ -544,14 +544,7 @@ impl CPU {
     }
 
     pub fn step(&mut self) -> u32 {
-        // Increment the DIV register
-        self.increment_div_register();
-
-        // Increment the TIMA register
-        self.increment_tima_register();
-
-        // Handle interrupts
-        let mut cycles = self.handle_interrupts();
+        let mut cycles = 0;
 
         // Handle HALT
         if self.halt_flag {
@@ -575,9 +568,27 @@ impl CPU {
         }
 
         self.tima_counter = self.tima_counter.wrapping_add(cycles);
-        self.cycle_counter = self.cycle_counter.wrapping_add(cycles);
+        self.div_counter = self.div_counter.wrapping_add(cycles);
 
-        cycles
+        // Increment the DIV register
+        self.increment_div_register();
+
+        // Increment the TIMA register
+        self.increment_tima_register();
+
+        // Handle interrupts
+        let cycles2 = self.handle_interrupts();
+
+        self.tima_counter = self.tima_counter.wrapping_add(cycles2);
+        self.div_counter = self.div_counter.wrapping_add(cycles2);
+
+        // Increment the DIV register
+        self.increment_div_register();
+
+        // Increment the TIMA register
+        self.increment_tima_register();
+
+        cycles + cycles2
     }
 
     fn handle_interrupts(&mut self) -> u32 {
