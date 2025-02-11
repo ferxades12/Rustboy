@@ -90,7 +90,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         0x10 => {
             // STOP
             cpu.stop_flag = true;
-            1
+            0
         }
         0x11 => {
             // LD DE, u16
@@ -653,7 +653,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         0x76 => {
             // HALT
             cpu.halt_flag = true;
-            1
+            0
         }
         0x77 => {
             // LD (HL), A
@@ -1195,8 +1195,13 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xD8 => {
             // RET C
-            cpu.RET(cpu.get_CF());
-            5
+            let cond = cpu.get_CF();
+            cpu.RET(cond);
+            if cond {
+                5
+            } else {
+                2
+            }
         }
         0xD9 => {
             // RETI
@@ -1768,7 +1773,7 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
             // BIT 0, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
             cpu.BIT(0, value);
-            4
+            3
         }
         0x47 => {
             // BIT 0, A
@@ -1809,7 +1814,7 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
             // BIT 1, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
             cpu.BIT(1, value);
-            4
+            3
         }
         0x4F => {
             // BIT 1, A
@@ -1850,7 +1855,7 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
             // BIT 2, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
             cpu.BIT(2, value);
-            4
+            3
         }
         0x57 => {
             // BIT 2, A
@@ -1891,7 +1896,7 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
             // BIT 3, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
             cpu.BIT(3, value);
-            4
+            3
         }
         0x5F => {
             // BIT 3, A
@@ -1932,7 +1937,7 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
             // BIT 4, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
             cpu.BIT(4, value);
-            4
+            3
         }
         0x67 => {
             // BIT 4, A
@@ -1973,7 +1978,7 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
             // BIT 5, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
             cpu.BIT(5, value);
-            4
+            3
         }
         0x6F => {
             // BIT 5, A
@@ -2014,7 +2019,7 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
             // BIT 6, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
             cpu.BIT(6, value);
-            4
+            3
         }
         0x77 => {
             // BIT 6, A
@@ -2055,7 +2060,7 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
             // BIT 7, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
             cpu.BIT(7, value);
-            4
+            3
         }
         0x7F => {
             // BIT 7, A

@@ -8,7 +8,7 @@ mod op_codes;
 
 const CYCLES_PER_FRAME: u32 = 70224;
 const FRAME_TIME: Duration = Duration::from_micros((1_000_000.0 / 59.7) as u64);
-const ROM_PATH: &str = r"rom\test\cpu_instrs\individual\02-interrupts.gb";
+const ROM_PATH: &str = r"rom\test\instr_timing\instr_timing.gb";
 
 fn main() {
     let mut cpu = CPU::new();

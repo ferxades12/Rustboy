@@ -550,8 +550,10 @@ impl CPU {
         // Increment the TIMA register
         self.increment_tima_register();
 
+        // Handle interrupts
         let mut cycles = self.handle_interrupts();
 
+        // Handle HALT
         if self.halt_flag {
             loop {
                 // Still running div and tima registers
@@ -571,6 +573,7 @@ impl CPU {
         } else {
             cycles += execute_opcode(self) as u32;
         }
+
         self.tima_counter = self.tima_counter.wrapping_add(cycles);
         self.cycle_counter = self.cycle_counter.wrapping_add(cycles);
 
