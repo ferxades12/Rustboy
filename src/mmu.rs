@@ -31,6 +31,10 @@ impl MMU {
             print!("{}", value as char);
             self.memory[0xFF02] = 0x00;
         }
+        if address == 0xFF04 {
+            self.memory[address as usize] = 0;
+            return;
+        }
         self.memory[address as usize] = value;
     }
 

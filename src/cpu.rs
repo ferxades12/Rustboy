@@ -508,8 +508,7 @@ impl CPU {
         }
     }
 
-    pub fn step(&mut self) -> u32 {
-        // Increment the DIV register
+    pub fn increment_div_register(&mut self) {
         if self.cycle_counter >= DIV_INCREMENT_RATE {
             self.mmu.write_byte(
                 ControlRegisters::DIV as u16,
@@ -519,8 +518,9 @@ impl CPU {
             );
             self.cycle_counter -= DIV_INCREMENT_RATE; // Reset the cycle counter
         }
+    }
 
-        // Increment the TIMA register
+    pub fn increment_tima_register(&mut self) {
         if self.tima_counter >= self.get_tac_frequency() && self.get_tac_enabled() {
             // Checks overflow in TIMA and enable bit in TAC
             self.tima_counter -= self.get_tac_frequency(); // Reset the TIMA counter
@@ -541,10 +541,36 @@ impl CPU {
                 self.mmu.write_byte(ControlRegisters::TIMA as u16, result);
             }
         }
+    }
+
+    pub fn step(&mut self) -> u32 {
+        // Increment the DIV register
+        self.increment_div_register();
+
+        // Increment the TIMA register
+        self.increment_tima_register();
 
         let mut cycles = self.handle_interrupts();
 
-        cycles += execute_opcode(self) as u32;
+        if self.halt_flag {
+            loop {
+                // Still running div and tima registers
+                self.increment_div_register();
+                self.increment_tima_register();
+
+                // Exit on interrupt
+                if (self.mmu.read_byte(ControlRegisters::IF as u16)
+                    & self.mmu.read_byte(ControlRegisters::IE as u16))
+                    != 0
+                {
+                    self.halt_flag = false;
+                    self.handle_interrupts();
+                    break;
+                }
+            }
+        } else {
+            cycles += execute_opcode(self) as u32;
+        }
         self.tima_counter = self.tima_counter.wrapping_add(cycles);
         self.cycle_counter = self.cycle_counter.wrapping_add(cycles);
 

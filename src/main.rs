@@ -8,7 +8,7 @@ mod op_codes;
 
 const CYCLES_PER_FRAME: u32 = 70224;
 const FRAME_TIME: Duration = Duration::from_micros((1_000_000.0 / 59.7) as u64);
-const ROM_PATH: &str = r"rom\test\cpu_instrs\individual\01-special.gb";
+const ROM_PATH: &str = r"rom\test\cpu_instrs\individual\02-interrupts.gb";
 
 fn main() {
     let mut cpu = CPU::new();
@@ -28,10 +28,6 @@ fn main() {
             // log con el formato : 01 F: B0 B: 00 C: 13 D: 00 E: D8 H: 01 L: 4D SP: FFFE PC: 00:0101  (mem[pc] mem[pc+1] mem[pc+2] mem[pc+3])
             //print!("{:02X} F: {:02X} B: {:02X} C: {:02X} D: {:02X} E: {:02X} H: {:02X} L: {:02X} SP: {:04X} PC: {:04X}  ({:02X} {:02X} {:02X} {:02X}) ", cpu.registers.A, cpu.registers.F, cpu.registers.B, cpu.registers.C, cpu.registers.D, cpu.registers.E, cpu.registers.H, cpu.registers.L, cpu.registers.SP, cpu.registers.PC, cpu.mmu.read_byte(cpu.registers.PC), cpu.mmu.read_byte(cpu.registers.PC + 1), cpu.mmu.read_byte(cpu.registers.PC + 2), cpu.mmu.read_byte(cpu.registers.PC + 3));
             cycles_elapsed += cpu.step() as u32;
-
-            if cpu.halt_flag {
-                break;
-            }
         }
 
         // Sincronizar tiempo
