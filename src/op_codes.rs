@@ -13,78 +13,78 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x02 => {
             // LD (BC), A
-            cpu.mmu.write_byte(cpu.get_bc(), cpu.registers.A);
+            cpu.mmu.write_byte(cpu.get_bc(), cpu.registers.a);
             2
         }
         0x03 => {
-            // INC BC
+            // inc BC
             let value = cpu.get_bc().wrapping_add(1);
             cpu.set_bc(value);
             2
         }
         0x04 => {
-            // INC B
-            cpu.registers.B = cpu.INC(cpu.registers.B);
+            // inc B
+            cpu.registers.b = cpu.inc(cpu.registers.b);
             1
         }
         0x05 => {
-            // DEC B
-            cpu.registers.B = cpu.DEC(cpu.registers.B);
+            // dec B
+            cpu.registers.b = cpu.dec(cpu.registers.b);
             1
         }
         0x06 => {
             // LD B, u8
             let value = cpu.fetch_byte();
-            cpu.registers.B = value;
+            cpu.registers.b = value;
             2
         }
         0x07 => {
-            // RLCA
-            cpu.RLCA();
+            // rlca
+            cpu.rlca();
             1
         }
         0x08 => {
-            // LD (u16), SP
+            // LD (u16), sp
             let word = cpu.fetch_word();
-            cpu.mmu.write_word(word, cpu.registers.SP);
+            cpu.mmu.write_word(word, cpu.registers.sp);
             5
         }
         0x09 => {
             // ADD HL, BC
-            let result = cpu.ADD16(cpu.get_hl(), cpu.get_bc());
+            let result = cpu.add16(cpu.get_hl(), cpu.get_bc());
             cpu.set_hl(result);
             2
         }
         0x0A => {
             // LD A, (BC)
-            cpu.registers.A = cpu.mmu.read_byte(cpu.get_bc());
+            cpu.registers.a = cpu.mmu.read_byte(cpu.get_bc());
             2
         }
         0x0B => {
-            // DEC BC
+            // dec BC
             let value = cpu.get_bc().wrapping_sub(1);
             cpu.set_bc(value);
             2
         }
         0x0C => {
-            // INC C
-            cpu.registers.C = cpu.INC(cpu.registers.C);
+            // inc C
+            cpu.registers.c = cpu.inc(cpu.registers.c);
             1
         }
         0x0D => {
-            // DEC C
-            cpu.registers.C = cpu.DEC(cpu.registers.C);
+            // dec C
+            cpu.registers.c = cpu.dec(cpu.registers.c);
             1
         }
         0x0E => {
             // LD C, u8
             let value = cpu.fetch_byte();
-            cpu.registers.C = value;
+            cpu.registers.c = value;
             2
         }
         0x0F => {
-            // RRCA
-            cpu.RRCA();
+            // rrca
+            cpu.rrca();
             1
         }
         0x10 => {
@@ -100,83 +100,83 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x12 => {
             // LD (DE), A
-            cpu.mmu.write_byte(cpu.get_de(), cpu.registers.A);
+            cpu.mmu.write_byte(cpu.get_de(), cpu.registers.a);
             2
         }
         0x13 => {
-            // INC DE
+            // inc DE
             let value = cpu.get_de().wrapping_add(1);
             cpu.set_de(value);
             2
         }
         0x14 => {
-            // INC D
-            cpu.registers.D = cpu.INC(cpu.registers.D);
+            // inc D
+            cpu.registers.d = cpu.inc(cpu.registers.d);
             1
         }
         0x15 => {
-            // DEC D
-            cpu.registers.D = cpu.DEC(cpu.registers.D);
+            // dec D
+            cpu.registers.d = cpu.dec(cpu.registers.d);
             1
         }
         0x16 => {
             // LD D, u8
             let value = cpu.fetch_byte();
-            cpu.registers.D = value;
+            cpu.registers.d = value;
             2
         }
         0x17 => {
-            // RLA
-            cpu.RLA();
+            // rla
+            cpu.rla();
             1
         }
         0x18 => {
-            // JR i8
-            cpu.JR(true);
+            // jr i8
+            cpu.jr(true);
             3
         }
         0x19 => {
             // ADD HL, DE
-            let result = cpu.ADD16(cpu.get_hl(), cpu.get_de());
+            let result = cpu.add16(cpu.get_hl(), cpu.get_de());
             cpu.set_hl(result);
             2
         }
         0x1A => {
             // LD A, (DE)
-            cpu.registers.A = cpu.mmu.read_byte(cpu.get_de());
+            cpu.registers.a = cpu.mmu.read_byte(cpu.get_de());
             2
         }
         0x1B => {
-            // DEC DE
+            // dec DE
             let value = cpu.get_de().wrapping_sub(1);
             cpu.set_de(value);
             2
         }
         0x1C => {
-            // INC E
-            cpu.registers.E = cpu.INC(cpu.registers.E);
+            // inc E
+            cpu.registers.e = cpu.inc(cpu.registers.e);
             1
         }
         0x1D => {
-            // DEC E
-            cpu.registers.E = cpu.DEC(cpu.registers.E);
+            // dec E
+            cpu.registers.e = cpu.dec(cpu.registers.e);
             1
         }
         0x1E => {
             // LD E, u8
             let value = cpu.fetch_byte();
-            cpu.registers.E = value;
+            cpu.registers.e = value;
             2
         }
         0x1F => {
-            // RRA
-            cpu.RRA();
+            // rra
+            cpu.rra();
             1
         }
         0x20 => {
-            // JR NZ, i8
-            let cond = !cpu.get_ZF();
-            cpu.JR(cond);
+            // jr NZ, i8
+            let cond = !cpu.get_zf();
+            cpu.jr(cond);
             if cond {
                 3
             } else {
@@ -192,41 +192,41 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         0x22 => {
             // LD (HL+), A
             let hl = cpu.get_hl();
-            cpu.mmu.write_byte(hl, cpu.registers.A);
+            cpu.mmu.write_byte(hl, cpu.registers.a);
             cpu.set_hl(hl.wrapping_add(1));
             2
         }
         0x23 => {
-            // INC HL
+            // inc HL
             let value = cpu.get_hl().wrapping_add(1);
             cpu.set_hl(value);
             2
         }
         0x24 => {
-            // INC H
-            cpu.registers.H = cpu.INC(cpu.registers.H);
+            // inc h
+            cpu.registers.h = cpu.inc(cpu.registers.h);
             1
         }
         0x25 => {
-            // DEC H
-            cpu.registers.H = cpu.DEC(cpu.registers.H);
+            // dec h
+            cpu.registers.h = cpu.dec(cpu.registers.h);
             1
         }
         0x26 => {
-            // LD H, u8
+            // LD h, u8
             let value = cpu.fetch_byte();
-            cpu.registers.H = value;
+            cpu.registers.h = value;
             2
         }
         0x27 => {
-            // DAA
-            cpu.DAA();
+            // daa
+            cpu.daa();
             1
         }
         0x28 => {
-            // JR Z, i8
-            let cond = cpu.get_ZF();
-            cpu.JR(cond);
+            // jr Z, i8
+            let cond = cpu.get_zf();
+            cpu.jr(cond);
             if cond {
                 3
             } else {
@@ -235,48 +235,48 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x29 => {
             // ADD HL, HL
-            let result = cpu.ADD16(cpu.get_hl(), cpu.get_hl());
+            let result = cpu.add16(cpu.get_hl(), cpu.get_hl());
             cpu.set_hl(result);
             2
         }
         0x2A => {
             // LD A, (HL+)
             let hl = cpu.get_hl();
-            cpu.registers.A = cpu.mmu.read_byte(hl);
+            cpu.registers.a = cpu.mmu.read_byte(hl);
             cpu.set_hl(hl.wrapping_add(1));
             2
         }
         0x2B => {
-            // DEC HL
+            // dec HL
             let value = cpu.get_hl().wrapping_sub(1);
             cpu.set_hl(value);
             2
         }
         0x2C => {
-            // INC L
-            cpu.registers.L = cpu.INC(cpu.registers.L);
+            // inc l
+            cpu.registers.l = cpu.inc(cpu.registers.l);
             1
         }
         0x2D => {
-            // DEC L
-            cpu.registers.L = cpu.DEC(cpu.registers.L);
+            // dec l
+            cpu.registers.l = cpu.dec(cpu.registers.l);
             1
         }
         0x2E => {
-            // LD L, u8
+            // LD l, u8
             let value = cpu.fetch_byte();
-            cpu.registers.L = value;
+            cpu.registers.l = value;
             2
         }
         0x2F => {
-            // CPL
-            cpu.CPL();
+            // cpl
+            cpu.cpl();
             1
         }
         0x30 => {
-            // JR NC, i8
-            let cond = !cpu.get_CF();
-            cpu.JR(cond);
+            // jr NC, i8
+            let cond = !cpu.get_cf();
+            cpu.jr(cond);
             if cond {
                 3
             } else {
@@ -284,35 +284,35 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
             }
         }
         0x31 => {
-            // LD SP, u16
+            // LD sp, u16
             let value = cpu.fetch_word();
-            cpu.registers.SP = value;
+            cpu.registers.sp = value;
             3
         }
         0x32 => {
             // LD (HL-), A
             let hl = cpu.get_hl();
-            cpu.mmu.write_byte(hl, cpu.registers.A);
+            cpu.mmu.write_byte(hl, cpu.registers.a);
             cpu.set_hl(hl.wrapping_sub(1));
             2
         }
         0x33 => {
-            // INC SP
-            let value = cpu.registers.SP.wrapping_add(1);
-            cpu.registers.SP = value;
+            // inc sp
+            let value = cpu.registers.sp.wrapping_add(1);
+            cpu.registers.sp = value;
             2
         }
         0x34 => {
-            // INC (HL)
+            // inc (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.INC(value);
+            let result = cpu.inc(value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             3
         }
         0x35 => {
-            // DEC (HL)
+            // dec (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.DEC(value);
+            let result = cpu.dec(value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             3
         }
@@ -323,14 +323,14 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
             3
         }
         0x37 => {
-            // SCF
-            cpu.SCF();
+            // scf
+            cpu.scf();
             1
         }
         0x38 => {
-            // JR C, i8
-            let cond = cpu.get_CF();
-            cpu.JR(cond);
+            // jr C, i8
+            let cond = cpu.get_cf();
+            cpu.jr(cond);
 
             if cond {
                 3
@@ -339,315 +339,315 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
             }
         }
         0x39 => {
-            // ADD HL, SP
-            let zf = cpu.get_ZF();
-            let result = cpu.ADD16(cpu.get_hl(), cpu.registers.SP);
+            // ADD HL, sp
+            let zf = cpu.get_zf();
+            let result = cpu.add16(cpu.get_hl(), cpu.registers.sp);
             cpu.set_hl(result);
-            cpu.set_ZF(zf);
+            cpu.set_zf(zf);
             2
         }
         0x3A => {
             // LD A, (HL-)
             let hl = cpu.get_hl();
-            cpu.registers.A = cpu.mmu.read_byte(hl);
+            cpu.registers.a = cpu.mmu.read_byte(hl);
             cpu.set_hl(hl.wrapping_sub(1));
             2
         }
         0x3B => {
-            // DEC SP
-            let value = cpu.registers.SP.wrapping_sub(1);
-            cpu.registers.SP = value;
+            // dec sp
+            let value = cpu.registers.sp.wrapping_sub(1);
+            cpu.registers.sp = value;
             2
         }
         0x3C => {
-            // INC A
-            cpu.registers.A = cpu.INC(cpu.registers.A);
+            // inc A
+            cpu.registers.a = cpu.inc(cpu.registers.a);
             1
         }
         0x3D => {
-            // DEC A
-            cpu.registers.A = cpu.DEC(cpu.registers.A);
+            // dec A
+            cpu.registers.a = cpu.dec(cpu.registers.a);
             1
         }
         0x3E => {
             // LD A, u8
             let value = cpu.fetch_byte();
-            cpu.registers.A = value;
+            cpu.registers.a = value;
             2
         }
         0x3F => {
-            // CCF
-            cpu.CCF();
+            // ccf
+            cpu.ccf();
             1
         }
         0x40 => {
             // LD B, B
-            cpu.registers.B = cpu.registers.B;
+            cpu.registers.b = cpu.registers.b;
             1
         }
         0x41 => {
             // LD B, C
-            cpu.registers.B = cpu.registers.C;
+            cpu.registers.b = cpu.registers.c;
             1
         }
         0x42 => {
             // LD B, D
-            cpu.registers.B = cpu.registers.D;
+            cpu.registers.b = cpu.registers.d;
             1
         }
         0x43 => {
             // LD B, E
-            cpu.registers.B = cpu.registers.E;
+            cpu.registers.b = cpu.registers.e;
             1
         }
         0x44 => {
-            // LD B, H
-            cpu.registers.B = cpu.registers.H;
+            // LD B, h
+            cpu.registers.b = cpu.registers.h;
             1
         }
         0x45 => {
-            // LD B, L
-            cpu.registers.B = cpu.registers.L;
+            // LD B, l
+            cpu.registers.b = cpu.registers.l;
             1
         }
         0x46 => {
             // LD B, (HL)
-            cpu.registers.B = cpu.mmu.read_byte(cpu.get_hl());
+            cpu.registers.b = cpu.mmu.read_byte(cpu.get_hl());
             2
         }
         0x47 => {
             // LD B, A
-            cpu.registers.B = cpu.registers.A;
+            cpu.registers.b = cpu.registers.a;
             1
         }
         0x48 => {
             // LD C, B
-            cpu.registers.C = cpu.registers.B;
+            cpu.registers.c = cpu.registers.b;
             1
         }
         0x49 => {
             // LD C, C
-            cpu.registers.C = cpu.registers.C;
+            cpu.registers.c = cpu.registers.c;
             1
         }
         0x4A => {
             // LD C, D
-            cpu.registers.C = cpu.registers.D;
+            cpu.registers.c = cpu.registers.d;
             1
         }
         0x4B => {
             // LD C, E
-            cpu.registers.C = cpu.registers.E;
+            cpu.registers.c = cpu.registers.e;
             1
         }
         0x4C => {
-            // LD C, H
-            cpu.registers.C = cpu.registers.H;
+            // LD C, h
+            cpu.registers.c = cpu.registers.h;
             1
         }
         0x4D => {
-            // LD C, L
-            cpu.registers.C = cpu.registers.L;
+            // LD C, l
+            cpu.registers.c = cpu.registers.l;
             1
         }
         0x4E => {
             // LD C, (HL)
-            cpu.registers.C = cpu.mmu.read_byte(cpu.get_hl());
+            cpu.registers.c = cpu.mmu.read_byte(cpu.get_hl());
             2
         }
         0x4F => {
             // LD C, A
-            cpu.registers.C = cpu.registers.A;
+            cpu.registers.c = cpu.registers.a;
             1
         }
         0x50 => {
             // LD D, B
-            cpu.registers.D = cpu.registers.B;
+            cpu.registers.d = cpu.registers.b;
             1
         }
         0x51 => {
             // LD D, C
-            cpu.registers.D = cpu.registers.C;
+            cpu.registers.d = cpu.registers.c;
             1
         }
         0x52 => {
             // LD D, D
-            cpu.registers.D = cpu.registers.D;
+            cpu.registers.d = cpu.registers.d;
             1
         }
         0x53 => {
             // LD D, E
-            cpu.registers.D = cpu.registers.E;
+            cpu.registers.d = cpu.registers.e;
             1
         }
         0x54 => {
-            // LD D, H
-            cpu.registers.D = cpu.registers.H;
+            // LD D, h
+            cpu.registers.d = cpu.registers.h;
             1
         }
         0x55 => {
-            // LD D, L
-            cpu.registers.D = cpu.registers.L;
+            // LD D, l
+            cpu.registers.d = cpu.registers.l;
             1
         }
         0x56 => {
             // LD D, (HL)
-            cpu.registers.D = cpu.mmu.read_byte(cpu.get_hl());
+            cpu.registers.d = cpu.mmu.read_byte(cpu.get_hl());
             2
         }
         0x57 => {
             // LD D, A
-            cpu.registers.D = cpu.registers.A;
+            cpu.registers.d = cpu.registers.a;
             1
         }
         0x58 => {
             // LD E, B
-            cpu.registers.E = cpu.registers.B;
+            cpu.registers.e = cpu.registers.b;
             1
         }
         0x59 => {
             // LD E, C
-            cpu.registers.E = cpu.registers.C;
+            cpu.registers.e = cpu.registers.c;
             1
         }
         0x5A => {
             // LD E, D
-            cpu.registers.E = cpu.registers.D;
+            cpu.registers.e = cpu.registers.d;
             1
         }
         0x5B => {
             // LD E, E
-            cpu.registers.E = cpu.registers.E;
+            cpu.registers.e = cpu.registers.e;
             1
         }
         0x5C => {
-            // LD E, H
-            cpu.registers.E = cpu.registers.H;
+            // LD E, h
+            cpu.registers.e = cpu.registers.h;
             1
         }
         0x5D => {
-            // LD E, L
-            cpu.registers.E = cpu.registers.L;
+            // LD E, l
+            cpu.registers.e = cpu.registers.l;
             1
         }
         0x5E => {
             // LD E, (HL)
-            cpu.registers.E = cpu.mmu.read_byte(cpu.get_hl());
+            cpu.registers.e = cpu.mmu.read_byte(cpu.get_hl());
             2
         }
         0x5F => {
             // LD E, A
-            cpu.registers.E = cpu.registers.A;
+            cpu.registers.e = cpu.registers.a;
             1
         }
         0x60 => {
-            // LD H, B
-            cpu.registers.H = cpu.registers.B;
+            // LD h, B
+            cpu.registers.h = cpu.registers.b;
             1
         }
         0x61 => {
-            // LD H, C
-            cpu.registers.H = cpu.registers.C;
+            // LD h, C
+            cpu.registers.h = cpu.registers.c;
             1
         }
         0x62 => {
-            // LD H, D
-            cpu.registers.H = cpu.registers.D;
+            // LD h, D
+            cpu.registers.h = cpu.registers.d;
             1
         }
         0x63 => {
-            // LD H, E
-            cpu.registers.H = cpu.registers.E;
+            // LD h, E
+            cpu.registers.h = cpu.registers.e;
             1
         }
         0x64 => {
-            // LD H, H
-            cpu.registers.H = cpu.registers.H;
+            // LD h, h
+            cpu.registers.h = cpu.registers.h;
             1
         }
         0x65 => {
-            // LD H, L
-            cpu.registers.H = cpu.registers.L;
+            // LD h, l
+            cpu.registers.h = cpu.registers.l;
             1
         }
         0x66 => {
-            // LD H, (HL)
-            cpu.registers.H = cpu.mmu.read_byte(cpu.get_hl());
+            // LD h, (HL)
+            cpu.registers.h = cpu.mmu.read_byte(cpu.get_hl());
             2
         }
         0x67 => {
-            // LD H, A
-            cpu.registers.H = cpu.registers.A;
+            // LD h, A
+            cpu.registers.h = cpu.registers.a;
             1
         }
         0x68 => {
-            // LD L, B
-            cpu.registers.L = cpu.registers.B;
+            // LD l, B
+            cpu.registers.l = cpu.registers.b;
             1
         }
         0x69 => {
-            // LD L, C
-            cpu.registers.L = cpu.registers.C;
+            // LD l, C
+            cpu.registers.l = cpu.registers.c;
             1
         }
         0x6A => {
-            // LD L, D
-            cpu.registers.L = cpu.registers.D;
+            // LD l, D
+            cpu.registers.l = cpu.registers.d;
             1
         }
         0x6B => {
-            // LD L, E
-            cpu.registers.L = cpu.registers.E;
+            // LD l, E
+            cpu.registers.l = cpu.registers.e;
             1
         }
         0x6C => {
-            // LD L, H
-            cpu.registers.L = cpu.registers.H;
+            // LD l, h
+            cpu.registers.l = cpu.registers.h;
             1
         }
         0x6D => {
-            // LD L, L
-            cpu.registers.L = cpu.registers.L;
+            // LD l, l
+            cpu.registers.l = cpu.registers.l;
             1
         }
         0x6E => {
-            // LD L, (HL)
-            cpu.registers.L = cpu.mmu.read_byte(cpu.get_hl());
+            // LD l, (HL)
+            cpu.registers.l = cpu.mmu.read_byte(cpu.get_hl());
             2
         }
         0x6F => {
-            // LD L, A
-            cpu.registers.L = cpu.registers.A;
+            // LD l, A
+            cpu.registers.l = cpu.registers.a;
             1
         }
         0x70 => {
             // LD (HL), B
-            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.B);
+            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.b);
             2
         }
         0x71 => {
             // LD (HL), C
-            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.C);
+            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.c);
             2
         }
         0x72 => {
             // LD (HL), D
-            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.D);
+            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.d);
             2
         }
         0x73 => {
             // LD (HL), E
-            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.E);
+            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.e);
             2
         }
         0x74 => {
-            // LD (HL), H
-            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.H);
+            // LD (HL), h
+            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.h);
             2
         }
         0x75 => {
-            // LD (HL), L
-            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.L);
+            // LD (HL), l
+            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.l);
             2
         }
         0x76 => {
@@ -657,381 +657,381 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x77 => {
             // LD (HL), A
-            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.A);
+            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.a);
             2
         }
         0x78 => {
             // LD A, B
-            cpu.registers.A = cpu.registers.B;
+            cpu.registers.a = cpu.registers.b;
             1
         }
         0x79 => {
             // LD A, C
-            cpu.registers.A = cpu.registers.C;
+            cpu.registers.a = cpu.registers.c;
             1
         }
         0x7A => {
             // LD A, D
-            cpu.registers.A = cpu.registers.D;
+            cpu.registers.a = cpu.registers.d;
             1
         }
         0x7B => {
             // LD A, E
-            cpu.registers.A = cpu.registers.E;
+            cpu.registers.a = cpu.registers.e;
             1
         }
         0x7C => {
-            // LD A, H
-            cpu.registers.A = cpu.registers.H;
+            // LD A, h
+            cpu.registers.a = cpu.registers.h;
             1
         }
         0x7D => {
-            // LD A, L
-            cpu.registers.A = cpu.registers.L;
+            // LD A, l
+            cpu.registers.a = cpu.registers.l;
             1
         }
         0x7E => {
             // LD A, (HL)
-            cpu.registers.A = cpu.mmu.read_byte(cpu.get_hl());
+            cpu.registers.a = cpu.mmu.read_byte(cpu.get_hl());
             2
         }
         0x7F => {
             // LD A, A
-            cpu.registers.A = cpu.registers.A;
+            cpu.registers.a = cpu.registers.a;
             1
         }
         0x80 => {
             // ADD A, B
-            cpu.registers.A = cpu.ADD8(cpu.registers.B);
+            cpu.registers.a = cpu.add8(cpu.registers.b);
             1
         }
         0x81 => {
             // ADD A, C
-            cpu.registers.A = cpu.ADD8(cpu.registers.C);
+            cpu.registers.a = cpu.add8(cpu.registers.c);
             1
         }
         0x82 => {
             // ADD A, D
-            cpu.registers.A = cpu.ADD8(cpu.registers.D);
+            cpu.registers.a = cpu.add8(cpu.registers.d);
             1
         }
         0x83 => {
             // ADD A, E
-            cpu.registers.A = cpu.ADD8(cpu.registers.E);
+            cpu.registers.a = cpu.add8(cpu.registers.e);
             1
         }
         0x84 => {
-            // ADD A, H
-            cpu.registers.A = cpu.ADD8(cpu.registers.H);
+            // ADD A, h
+            cpu.registers.a = cpu.add8(cpu.registers.h);
             1
         }
         0x85 => {
-            // ADD A, L
-            cpu.registers.A = cpu.ADD8(cpu.registers.L);
+            // ADD A, l
+            cpu.registers.a = cpu.add8(cpu.registers.l);
             1
         }
         0x86 => {
             // ADD A, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            cpu.registers.A = cpu.ADD8(value);
+            cpu.registers.a = cpu.add8(value);
             2
         }
         0x87 => {
             // ADD A, A
-            cpu.registers.A = cpu.ADD8(cpu.registers.A);
+            cpu.registers.a = cpu.add8(cpu.registers.a);
             1
         }
         0x88 => {
-            // ADC A, B
-            cpu.registers.A = cpu.ADC(cpu.registers.B);
+            // adc A, B
+            cpu.registers.a = cpu.adc(cpu.registers.b);
             2
         }
         0x89 => {
-            // ADC A, C
-            cpu.registers.A = cpu.ADC(cpu.registers.C);
+            // adc A, C
+            cpu.registers.a = cpu.adc(cpu.registers.c);
             1
         }
         0x8A => {
-            // ADC A, D
-            cpu.registers.A = cpu.ADC(cpu.registers.D);
+            // adc A, D
+            cpu.registers.a = cpu.adc(cpu.registers.d);
             1
         }
         0x8B => {
-            // ADC A, E
-            cpu.registers.A = cpu.ADC(cpu.registers.E);
+            // adc A, E
+            cpu.registers.a = cpu.adc(cpu.registers.e);
             1
         }
         0x8C => {
-            // ADC A, H
-            cpu.registers.A = cpu.ADC(cpu.registers.H);
+            // adc A, h
+            cpu.registers.a = cpu.adc(cpu.registers.h);
             1
         }
         0x8D => {
-            // ADC A, L
-            cpu.registers.A = cpu.ADC(cpu.registers.L);
+            // adc A, l
+            cpu.registers.a = cpu.adc(cpu.registers.l);
             1
         }
         0x8E => {
-            // ADC A, (HL)
+            // adc A, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            cpu.registers.A = cpu.ADC(value);
+            cpu.registers.a = cpu.adc(value);
             2
         }
         0x8F => {
-            // ADC A, A
-            cpu.registers.A = cpu.ADC(cpu.registers.A);
+            // adc A, A
+            cpu.registers.a = cpu.adc(cpu.registers.a);
             1
         }
         0x90 => {
-            // SUB A, B
-            cpu.registers.A = cpu.SUB(cpu.registers.B);
+            // sub A, B
+            cpu.registers.a = cpu.sub(cpu.registers.b);
             1
         }
         0x91 => {
-            // SUB A, C
-            cpu.registers.A = cpu.SUB(cpu.registers.C);
+            // sub A, C
+            cpu.registers.a = cpu.sub(cpu.registers.c);
             1
         }
         0x92 => {
-            // SUB A, D
-            cpu.registers.A = cpu.SUB(cpu.registers.D);
+            // sub A, D
+            cpu.registers.a = cpu.sub(cpu.registers.d);
             1
         }
         0x93 => {
-            // SUB A, E
-            cpu.registers.A = cpu.SUB(cpu.registers.E);
+            // sub A, E
+            cpu.registers.a = cpu.sub(cpu.registers.e);
             1
         }
         0x94 => {
-            // SUB A, H
-            cpu.registers.A = cpu.SUB(cpu.registers.H);
+            // sub A, h
+            cpu.registers.a = cpu.sub(cpu.registers.h);
             1
         }
         0x95 => {
-            // SUB A, L
-            cpu.registers.A = cpu.SUB(cpu.registers.L);
+            // sub A, l
+            cpu.registers.a = cpu.sub(cpu.registers.l);
             1
         }
         0x96 => {
-            // SUB A, (HL)
+            // sub A, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            cpu.registers.A = cpu.SUB(value);
+            cpu.registers.a = cpu.sub(value);
             2
         }
         0x97 => {
-            // SUB A, A
-            cpu.registers.A = cpu.SUB(cpu.registers.A);
+            // sub A, A
+            cpu.registers.a = cpu.sub(cpu.registers.a);
             1
         }
         0x98 => {
-            // SBC A, B
-            cpu.registers.A = cpu.SBC(cpu.registers.B);
+            // sbc A, B
+            cpu.registers.a = cpu.sbc(cpu.registers.b);
             1
         }
         0x99 => {
-            // SBC A, C
-            cpu.registers.A = cpu.SBC(cpu.registers.C);
+            // sbc A, C
+            cpu.registers.a = cpu.sbc(cpu.registers.c);
             1
         }
         0x9A => {
-            // SBC A, D
-            cpu.registers.A = cpu.SBC(cpu.registers.D);
+            // sbc A, D
+            cpu.registers.a = cpu.sbc(cpu.registers.d);
             1
         }
         0x9B => {
-            // SBC A, E
-            cpu.registers.A = cpu.SBC(cpu.registers.E);
+            // sbc A, E
+            cpu.registers.a = cpu.sbc(cpu.registers.e);
             1
         }
         0x9C => {
-            // SBC A, H
-            cpu.registers.A = cpu.SBC(cpu.registers.H);
+            // sbc A, h
+            cpu.registers.a = cpu.sbc(cpu.registers.h);
             1
         }
         0x9D => {
-            // SBC A, L
-            cpu.registers.A = cpu.SBC(cpu.registers.L);
+            // sbc A, l
+            cpu.registers.a = cpu.sbc(cpu.registers.l);
             1
         }
         0x9E => {
-            // SBC A, (HL)
+            // sbc A, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            cpu.registers.A = cpu.SBC(value);
+            cpu.registers.a = cpu.sbc(value);
             2
         }
         0x9F => {
-            // SBC A, A
-            cpu.registers.A = cpu.SBC(cpu.registers.A);
+            // sbc A, A
+            cpu.registers.a = cpu.sbc(cpu.registers.a);
             1
         }
         0xA0 => {
-            // AND A, B
-            cpu.AND(cpu.registers.B);
+            // and A, B
+            cpu.and(cpu.registers.b);
             1
         }
         0xA1 => {
-            // AND A, C
-            cpu.AND(cpu.registers.C);
+            // and A, C
+            cpu.and(cpu.registers.c);
             1
         }
         0xA2 => {
-            // AND A, D
-            cpu.AND(cpu.registers.D);
+            // and A, D
+            cpu.and(cpu.registers.d);
             1
         }
         0xA3 => {
-            // AND A, E
-            cpu.AND(cpu.registers.E);
+            // and A, E
+            cpu.and(cpu.registers.e);
             1
         }
         0xA4 => {
-            // AND A, H
-            cpu.AND(cpu.registers.H);
+            // and A, h
+            cpu.and(cpu.registers.h);
             1
         }
         0xA5 => {
-            // AND A, L
-            cpu.AND(cpu.registers.L);
+            // and A, l
+            cpu.and(cpu.registers.l);
             1
         }
         0xA6 => {
-            // AND A, (HL)
+            // and A, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            cpu.AND(value);
+            cpu.and(value);
             2
         }
         0xA7 => {
-            // AND A, A
-            cpu.AND(cpu.registers.A);
+            // and A, A
+            cpu.and(cpu.registers.a);
             1
         }
         0xA8 => {
-            // XOR A, B
-            cpu.XOR(cpu.registers.B);
+            // xor A, B
+            cpu.xor(cpu.registers.b);
             1
         }
         0xA9 => {
-            // XOR A, C
-            cpu.XOR(cpu.registers.C);
+            // xor A, C
+            cpu.xor(cpu.registers.c);
             1
         }
         0xAA => {
-            // XOR A, D
-            cpu.XOR(cpu.registers.D);
+            // xor A, D
+            cpu.xor(cpu.registers.d);
             1
         }
         0xAB => {
-            // XOR A, E
-            cpu.XOR(cpu.registers.E);
+            // xor A, E
+            cpu.xor(cpu.registers.e);
             1
         }
         0xAC => {
-            // XOR A, H
-            cpu.XOR(cpu.registers.H);
+            // xor A, h
+            cpu.xor(cpu.registers.h);
             1
         }
         0xAD => {
-            // XOR A, L
-            cpu.XOR(cpu.registers.L);
+            // xor A, l
+            cpu.xor(cpu.registers.l);
             1
         }
         0xAE => {
-            // XOR A, (HL)
+            // xor A, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            cpu.XOR(value);
+            cpu.xor(value);
             2
         }
         0xAF => {
-            // XOR A, A
-            cpu.XOR(cpu.registers.A);
+            // xor A, A
+            cpu.xor(cpu.registers.a);
             1
         }
         0xB0 => {
-            // OR A, B
-            cpu.OR(cpu.registers.B);
+            // or A, B
+            cpu.or(cpu.registers.b);
             1
         }
         0xB1 => {
-            // OR A, C
-            cpu.OR(cpu.registers.C);
+            // or A, C
+            cpu.or(cpu.registers.c);
             1
         }
         0xB2 => {
-            // OR A, D
-            cpu.OR(cpu.registers.D);
+            // or A, D
+            cpu.or(cpu.registers.d);
             1
         }
         0xB3 => {
-            // OR A, E
-            cpu.OR(cpu.registers.E);
+            // or A, E
+            cpu.or(cpu.registers.e);
             1
         }
         0xB4 => {
-            // OR A, H
-            cpu.OR(cpu.registers.H);
+            // or A, h
+            cpu.or(cpu.registers.h);
             1
         }
         0xB5 => {
-            // OR A, L
-            cpu.OR(cpu.registers.L);
+            // or A, l
+            cpu.or(cpu.registers.l);
             1
         }
         0xB6 => {
-            // OR A, (HL)
+            // or A, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            cpu.OR(value);
+            cpu.or(value);
             2
         }
         0xB7 => {
-            // OR A, A
-            cpu.OR(cpu.registers.A);
+            // or A, A
+            cpu.or(cpu.registers.a);
             1
         }
         0xB8 => {
-            // CP A, B
-            cpu.CP(cpu.registers.B);
+            // cp A, B
+            cpu.cp(cpu.registers.b);
             1
         }
         0xB9 => {
-            // CP A, C
-            cpu.CP(cpu.registers.C);
+            // cp A, C
+            cpu.cp(cpu.registers.c);
             1
         }
         0xBA => {
-            // CP A, D
-            cpu.CP(cpu.registers.D);
+            // cp A, D
+            cpu.cp(cpu.registers.d);
             1
         }
         0xBB => {
-            // CP A, E
-            cpu.CP(cpu.registers.E);
+            // cp A, E
+            cpu.cp(cpu.registers.e);
             1
         }
         0xBC => {
-            // CP A, H
-            cpu.CP(cpu.registers.H);
+            // cp A, h
+            cpu.cp(cpu.registers.h);
             1
         }
         0xBD => {
-            // CP A, L
-            cpu.CP(cpu.registers.L);
+            // cp A, l
+            cpu.cp(cpu.registers.l);
             1
         }
         0xBE => {
-            // CP A, (HL)
+            // cp A, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            cpu.CP(value);
+            cpu.cp(value);
             2
         }
         0xBF => {
-            // CP A, A
-            cpu.CP(cpu.registers.A);
+            // cp A, A
+            cpu.cp(cpu.registers.a);
             1
         }
         0xC0 => {
-            // RET NZ
-            let cond = !cpu.get_ZF();
-            cpu.RET(cond);
+            // ret NZ
+            let cond = !cpu.get_zf();
+            cpu.ret(cond);
 
             if cond {
                 5
@@ -1040,15 +1040,15 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
             }
         }
         0xC1 => {
-            // POP BC
-            let value = cpu.POP();
+            // pop BC
+            let value = cpu.pop();
             cpu.set_bc(value);
             3
         }
         0xC2 => {
-            // JP NZ, u16
-            let cond = !cpu.get_ZF();
-            cpu.JP(cond);
+            // jp NZ, u16
+            let cond = !cpu.get_zf();
+            cpu.jp(cond);
             if cond {
                 4
             } else {
@@ -1056,14 +1056,14 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
             }
         }
         0xC3 => {
-            // JP u16
-            cpu.JP(true);
+            // jp u16
+            cpu.jp(true);
             4
         }
         0xC4 => {
-            // CALL NZ, u16
-            let cond = !cpu.get_ZF();
-            cpu.CALL(cond);
+            // call NZ, u16
+            let cond = !cpu.get_zf();
+            cpu.call(cond);
             if cond {
                 6
             } else {
@@ -1071,25 +1071,25 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
             }
         }
         0xC5 => {
-            // PUSH BC
-            cpu.PUSH(cpu.get_bc());
+            // push BC
+            cpu.push(cpu.get_bc());
             4
         }
         0xC6 => {
             // ADD A, u8
             let value = cpu.fetch_byte();
-            cpu.registers.A = cpu.ADD8(value);
+            cpu.registers.a = cpu.add8(value);
             2
         }
         0xC7 => {
-            // RST 00H
-            cpu.RST(0x00);
+            // rst 00H
+            cpu.rst(0x00);
             4
         }
         0xC8 => {
-            // RET Z
-            let cond = cpu.get_ZF();
-            cpu.RET(cond);
+            // ret Z
+            let cond = cpu.get_zf();
+            cpu.ret(cond);
             if cond {
                 5
             } else {
@@ -1097,14 +1097,14 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
             }
         }
         0xC9 => {
-            // RET
-            cpu.RET(true);
+            // ret
+            cpu.ret(true);
             4
         }
         0xCA => {
-            // JP Z, u16
-            let cond = cpu.get_ZF();
-            cpu.JP(cond);
+            // jp Z, u16
+            let cond = cpu.get_zf();
+            cpu.jp(cond);
             if cond {
                 4
             } else {
@@ -1116,9 +1116,9 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
             execute_cb_opcode(cpu)
         }
         0xCC => {
-            // CALL Z, u16
-            let cond = cpu.get_ZF();
-            cpu.CALL(cond);
+            // call Z, u16
+            let cond = cpu.get_zf();
+            cpu.call(cond);
             if cond {
                 6
             } else {
@@ -1126,25 +1126,25 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
             }
         }
         0xCD => {
-            // CALL u16
-            cpu.CALL(true);
+            // call u16
+            cpu.call(true);
             6
         }
         0xCE => {
-            // ADC A, u8
+            // adc A, u8
             let value = cpu.fetch_byte();
-            cpu.registers.A = cpu.ADC(value);
+            cpu.registers.a = cpu.adc(value);
             2
         }
         0xCF => {
-            // RST 08H
-            cpu.RST(0x08);
+            // rst 08H
+            cpu.rst(0x08);
             4
         }
         0xD0 => {
-            // RET NC
-            let cond = !cpu.get_CF();
-            cpu.RET(cond);
+            // ret NC
+            let cond = !cpu.get_cf();
+            cpu.ret(cond);
             if cond {
                 5
             } else {
@@ -1152,15 +1152,15 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
             }
         }
         0xD1 => {
-            // POP DE
-            let value = cpu.POP();
+            // pop DE
+            let value = cpu.pop();
             cpu.set_de(value);
             3
         }
         0xD2 => {
-            // JP NC, u16
-            let cond = !cpu.get_CF();
-            cpu.JP(cond);
+            // jp NC, u16
+            let cond = !cpu.get_cf();
+            cpu.jp(cond);
             if cond {
                 4
             } else {
@@ -1168,9 +1168,9 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
             }
         }
         0xD4 => {
-            // CALL NC, u16
-            let cond = !cpu.get_CF();
-            cpu.CALL(cond);
+            // call NC, u16
+            let cond = !cpu.get_cf();
+            cpu.call(cond);
             if cond {
                 6
             } else {
@@ -1178,25 +1178,25 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
             }
         }
         0xD5 => {
-            // PUSH DE
-            cpu.PUSH(cpu.get_de());
+            // push DE
+            cpu.push(cpu.get_de());
             4
         }
         0xD6 => {
-            // SUB A, u8
+            // sub A, u8
             let value = cpu.fetch_byte();
-            cpu.registers.A = cpu.SUB(value);
+            cpu.registers.a = cpu.sub(value);
             2
         }
         0xD7 => {
-            // RST 10H
-            cpu.RST(0x10);
+            // rst 10H
+            cpu.rst(0x10);
             4
         }
         0xD8 => {
-            // RET C
-            let cond = cpu.get_CF();
-            cpu.RET(cond);
+            // ret C
+            let cond = cpu.get_cf();
+            cpu.ret(cond);
             if cond {
                 5
             } else {
@@ -1205,14 +1205,14 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xD9 => {
             // RETI
-            cpu.RET(true);
+            cpu.ret(true);
             cpu.ei_flag = true;
             4
         }
         0xDA => {
-            // JP C, u16
-            let cond = cpu.get_CF();
-            cpu.JP(cond);
+            // jp C, u16
+            let cond = cpu.get_cf();
+            cpu.jp(cond);
             if cond {
                 4
             } else {
@@ -1220,9 +1220,9 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
             }
         }
         0xDC => {
-            // CALL C, u16
-            let cond = cpu.get_CF();
-            cpu.CALL(cond);
+            // call C, u16
+            let cond = cpu.get_cf();
+            cpu.call(cond);
             if cond {
                 6
             } else {
@@ -1230,54 +1230,54 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
             }
         }
         0xDE => {
-            // SBC A, u8
+            // sbc A, u8
             let value = cpu.fetch_byte();
-            cpu.registers.A = cpu.SBC(value);
+            cpu.registers.a = cpu.sbc(value);
             2
         }
         0xDF => {
-            // RST 18H
-            cpu.RST(0x18);
+            // rst 18H
+            cpu.rst(0x18);
             4
         }
         0xE0 => {
             // LD (FF00 + u8), A
             let value = cpu.fetch_byte();
-            cpu.mmu.write_byte(0xFF00 + value as u16, cpu.registers.A);
+            cpu.mmu.write_byte(0xFF00 + value as u16, cpu.registers.a);
             3
         }
         0xE1 => {
-            // POP HL
-            let value = cpu.POP();
+            // pop HL
+            let value = cpu.pop();
             cpu.set_hl(value);
             3
         }
         0xE2 => {
             // LD (FF00 + C), A
             cpu.mmu
-                .write_byte(0xFF00 + cpu.registers.C as u16, cpu.registers.A);
+                .write_byte(0xFF00 + cpu.registers.c as u16, cpu.registers.a);
             2
         }
         0xE5 => {
-            // PUSH HL
-            cpu.PUSH(cpu.get_hl());
+            // push HL
+            cpu.push(cpu.get_hl());
             4
         }
         0xE6 => {
-            // AND A, u8
+            // and A, u8
             let value = cpu.fetch_byte();
-            cpu.AND(value);
+            cpu.and(value);
             2
         }
         0xE7 => {
-            // RST 20H
-            cpu.RST(0x20);
+            // rst 20H
+            cpu.rst(0x20);
             4
         }
         0xE8 => {
-            // ADD SP, i8
+            // ADD sp, i8
             let value = cpu.fetch_byte() as i8 as i16; // Convertir a i16 para la suma correcta
-            let sp = cpu.registers.SP as i16;
+            let sp = cpu.registers.sp as i16;
             let result = sp.wrapping_add(value) as u16;
 
             // Calcular los flags de carry y half-carry
@@ -1287,47 +1287,47 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
             // Actualizar los flags
             cpu.update_flags(false, carry, half_carry, false);
 
-            // Actualizar el registro SP
-            cpu.registers.SP = result;
+            // Actualizar el registro sp
+            cpu.registers.sp = result;
             4
         }
         0xE9 => {
-            // JP HL
-            cpu.registers.PC = cpu.get_hl();
+            // jp HL
+            cpu.registers.pc = cpu.get_hl();
             1
         }
         0xEA => {
             // LD (u16), A
             let value = cpu.fetch_word();
-            cpu.mmu.write_byte(value, cpu.registers.A);
+            cpu.mmu.write_byte(value, cpu.registers.a);
             4
         }
         0xEE => {
-            // XOR A, u8
+            // xor A, u8
             let value = cpu.fetch_byte();
-            cpu.XOR(value);
+            cpu.xor(value);
             2
         }
         0xEF => {
-            // RST 28H
-            cpu.RST(0x28);
+            // rst 28H
+            cpu.rst(0x28);
             4
         }
         0xF0 => {
             // LD A, (FF00 + u8)
             let value = cpu.fetch_byte();
-            cpu.registers.A = cpu.mmu.read_byte(0xFF00 + value as u16);
+            cpu.registers.a = cpu.mmu.read_byte(0xFF00 + value as u16);
             3
         }
         0xF1 => {
-            // POP AF
-            let value = cpu.POP() & 0xFFF0;
+            // pop AF
+            let value = cpu.pop() & 0xFFF0;
             cpu.set_af(value);
             3
         }
         0xF2 => {
             // LD A, (FF00 + C)
-            cpu.registers.A = cpu.mmu.read_byte(0xFF00 + cpu.registers.C as u16);
+            cpu.registers.a = cpu.mmu.read_byte(0xFF00 + cpu.registers.c as u16);
             2
         }
         0xF3 => {
@@ -1337,25 +1337,25 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
             1
         }
         0xF5 => {
-            // PUSH AF
-            cpu.PUSH(cpu.get_af());
+            // push AF
+            cpu.push(cpu.get_af());
             4
         }
         0xF6 => {
-            // OR A, u8
+            // or A, u8
             let value = cpu.fetch_byte();
-            cpu.OR(value);
+            cpu.or(value);
             2
         }
         0xF7 => {
-            // RST 30H
-            cpu.RST(0x30);
+            // rst 30H
+            cpu.rst(0x30);
             4
         }
         0xF8 => {
-            // LD HL, SP+i8
+            // LD HL, sp+i8
             let value = cpu.fetch_byte() as i8 as i16;
-            let sp = cpu.registers.SP as i16;
+            let sp = cpu.registers.sp as i16;
             let result = sp.wrapping_add(value) as u16;
 
             // Calcular los flags de carry y half-carry
@@ -1370,14 +1370,14 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
             3
         }
         0xF9 => {
-            // LD SP, HL
-            cpu.registers.SP = cpu.get_hl();
+            // LD sp, HL
+            cpu.registers.sp = cpu.get_hl();
             2
         }
         0xFA => {
             // LD A, (u16)
             let value = cpu.fetch_word();
-            cpu.registers.A = cpu.mmu.read_byte(value);
+            cpu.registers.a = cpu.mmu.read_byte(value);
             4
         }
         0xFB => {
@@ -1386,14 +1386,14 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
             1
         }
         0xFE => {
-            // CP A, u8
+            // cp A, u8
             let value = cpu.fetch_byte();
-            cpu.CP(value);
+            cpu.cp(value);
             2
         }
         0xFF => {
-            // RST 38H
-            cpu.RST(0x38);
+            // rst 38H
+            cpu.rst(0x38);
             4
         }
         _ => panic!("Unknown opcode: 0x{:X}", opcode),
@@ -1404,1339 +1404,1339 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
     let op_code = cpu.fetch_byte();
     match op_code {
         0x00 => {
-            // RLC B
-            cpu.registers.B = cpu.RLC(cpu.registers.B);
+            // rlc B
+            cpu.registers.b = cpu.rlc(cpu.registers.b);
             2
         }
         0x01 => {
-            // RLC C
-            cpu.registers.C = cpu.RLC(cpu.registers.C);
+            // rlc C
+            cpu.registers.c = cpu.rlc(cpu.registers.c);
             2
         }
         0x02 => {
-            // RLC D
-            cpu.registers.D = cpu.RLC(cpu.registers.D);
+            // rlc D
+            cpu.registers.d = cpu.rlc(cpu.registers.d);
             2
         }
         0x03 => {
-            // RLC E
-            cpu.registers.E = cpu.RLC(cpu.registers.E);
+            // rlc E
+            cpu.registers.e = cpu.rlc(cpu.registers.e);
             2
         }
         0x04 => {
-            // RLC H
-            cpu.registers.H = cpu.RLC(cpu.registers.H);
+            // rlc h
+            cpu.registers.h = cpu.rlc(cpu.registers.h);
             2
         }
         0x05 => {
-            // RLC L
-            cpu.registers.L = cpu.RLC(cpu.registers.L);
+            // rlc l
+            cpu.registers.l = cpu.rlc(cpu.registers.l);
             2
         }
         0x06 => {
-            // RLC (HL)
+            // rlc (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.RLC(value);
+            let result = cpu.rlc(value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x07 => {
-            // RLC A
-            cpu.registers.A = cpu.RLC(cpu.registers.A);
+            // rlc A
+            cpu.registers.a = cpu.rlc(cpu.registers.a);
             2
         }
         0x08 => {
-            // RRC B
-            cpu.registers.B = cpu.RRC(cpu.registers.B);
+            // rrc B
+            cpu.registers.b = cpu.rrc(cpu.registers.b);
             2
         }
         0x09 => {
-            // RRC C
-            cpu.registers.C = cpu.RRC(cpu.registers.C);
+            // rrc C
+            cpu.registers.c = cpu.rrc(cpu.registers.c);
             2
         }
         0x0A => {
-            // RRC D
-            cpu.registers.D = cpu.RRC(cpu.registers.D);
+            // rrc D
+            cpu.registers.d = cpu.rrc(cpu.registers.d);
             2
         }
         0x0B => {
-            // RRC E
-            cpu.registers.E = cpu.RRC(cpu.registers.E);
+            // rrc E
+            cpu.registers.e = cpu.rrc(cpu.registers.e);
             2
         }
         0x0C => {
-            // RRC H
-            cpu.registers.H = cpu.RRC(cpu.registers.H);
+            // rrc h
+            cpu.registers.h = cpu.rrc(cpu.registers.h);
             2
         }
         0x0D => {
-            // RRC L
-            cpu.registers.L = cpu.RRC(cpu.registers.L);
+            // rrc l
+            cpu.registers.l = cpu.rrc(cpu.registers.l);
             2
         }
         0x0E => {
-            // RRC (HL)
+            // rrc (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.RRC(value);
+            let result = cpu.rrc(value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x0F => {
-            // RRC A
-            cpu.registers.A = cpu.RRC(cpu.registers.A);
+            // rrc A
+            cpu.registers.a = cpu.rrc(cpu.registers.a);
             2
         }
         0x10 => {
-            // RL B
-            cpu.registers.B = cpu.RL(cpu.registers.B);
+            // rl B
+            cpu.registers.b = cpu.rl(cpu.registers.b);
             2
         }
         0x11 => {
-            // RL C
-            cpu.registers.C = cpu.RL(cpu.registers.C);
+            // rl C
+            cpu.registers.c = cpu.rl(cpu.registers.c);
             2
         }
         0x12 => {
-            // RL D
-            cpu.registers.D = cpu.RL(cpu.registers.D);
+            // rl D
+            cpu.registers.d = cpu.rl(cpu.registers.d);
             2
         }
         0x13 => {
-            // RL E
-            cpu.registers.E = cpu.RL(cpu.registers.E);
+            // rl E
+            cpu.registers.e = cpu.rl(cpu.registers.e);
             2
         }
         0x14 => {
-            // RL H
-            cpu.registers.H = cpu.RL(cpu.registers.H);
+            // rl h
+            cpu.registers.h = cpu.rl(cpu.registers.h);
             2
         }
         0x15 => {
-            // RL L
-            cpu.registers.L = cpu.RL(cpu.registers.L);
+            // rl l
+            cpu.registers.l = cpu.rl(cpu.registers.l);
             2
         }
         0x16 => {
-            // RL (HL)
+            // rl (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.RL(value);
+            let result = cpu.rl(value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x17 => {
-            // RL A
-            cpu.registers.A = cpu.RL(cpu.registers.A);
+            // rl A
+            cpu.registers.a = cpu.rl(cpu.registers.a);
             2
         }
         0x18 => {
-            // RR B
-            cpu.registers.B = cpu.RR(cpu.registers.B);
+            // rr B
+            cpu.registers.b = cpu.rr(cpu.registers.b);
             2
         }
         0x19 => {
-            // RR C
-            cpu.registers.C = cpu.RR(cpu.registers.C);
+            // rr C
+            cpu.registers.c = cpu.rr(cpu.registers.c);
             2
         }
         0x1A => {
-            // RR D
-            cpu.registers.D = cpu.RR(cpu.registers.D);
+            // rr D
+            cpu.registers.d = cpu.rr(cpu.registers.d);
             2
         }
         0x1B => {
-            // RR E
-            cpu.registers.E = cpu.RR(cpu.registers.E);
+            // rr E
+            cpu.registers.e = cpu.rr(cpu.registers.e);
             2
         }
         0x1C => {
-            // RR H
-            cpu.registers.H = cpu.RR(cpu.registers.H);
+            // rr h
+            cpu.registers.h = cpu.rr(cpu.registers.h);
             2
         }
         0x1D => {
-            // RR L
-            cpu.registers.L = cpu.RR(cpu.registers.L);
+            // rr l
+            cpu.registers.l = cpu.rr(cpu.registers.l);
             2
         }
         0x1E => {
-            // RR (HL)
+            // rr (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.RR(value);
+            let result = cpu.rr(value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x1F => {
-            // RR A
-            cpu.registers.A = cpu.RR(cpu.registers.A);
+            // rr A
+            cpu.registers.a = cpu.rr(cpu.registers.a);
             2
         }
         0x20 => {
-            // SLA B
-            cpu.registers.B = cpu.SLA(cpu.registers.B);
+            // sla B
+            cpu.registers.b = cpu.sla(cpu.registers.b);
             2
         }
         0x21 => {
-            // SLA C
-            cpu.registers.C = cpu.SLA(cpu.registers.C);
+            // sla C
+            cpu.registers.c = cpu.sla(cpu.registers.c);
             2
         }
         0x22 => {
-            // SLA D
-            cpu.registers.D = cpu.SLA(cpu.registers.D);
+            // sla D
+            cpu.registers.d = cpu.sla(cpu.registers.d);
             2
         }
         0x23 => {
-            // SLA E
-            cpu.registers.E = cpu.SLA(cpu.registers.E);
+            // sla E
+            cpu.registers.e = cpu.sla(cpu.registers.e);
             2
         }
         0x24 => {
-            // SLA H
-            cpu.registers.H = cpu.SLA(cpu.registers.H);
+            // sla h
+            cpu.registers.h = cpu.sla(cpu.registers.h);
             2
         }
         0x25 => {
-            // SLA L
-            cpu.registers.L = cpu.SLA(cpu.registers.L);
+            // sla l
+            cpu.registers.l = cpu.sla(cpu.registers.l);
             2
         }
         0x26 => {
-            // SLA (HL)
+            // sla (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.SLA(value);
+            let result = cpu.sla(value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x27 => {
-            // SLA A
-            cpu.registers.A = cpu.SLA(cpu.registers.A);
+            // sla A
+            cpu.registers.a = cpu.sla(cpu.registers.a);
             2
         }
         0x28 => {
-            // SRA B
-            cpu.registers.B = cpu.SRA(cpu.registers.B);
+            // sra B
+            cpu.registers.b = cpu.sra(cpu.registers.b);
             2
         }
         0x29 => {
-            // SRA C
-            cpu.registers.C = cpu.SRA(cpu.registers.C);
+            // sra C
+            cpu.registers.c = cpu.sra(cpu.registers.c);
             2
         }
         0x2A => {
-            // SRA D
-            cpu.registers.D = cpu.SRA(cpu.registers.D);
+            // sra D
+            cpu.registers.d = cpu.sra(cpu.registers.d);
             2
         }
         0x2B => {
-            // SRA E
-            cpu.registers.E = cpu.SRA(cpu.registers.E);
+            // sra E
+            cpu.registers.e = cpu.sra(cpu.registers.e);
             2
         }
         0x2C => {
-            // SRA H
-            cpu.registers.H = cpu.SRA(cpu.registers.H);
+            // sra h
+            cpu.registers.h = cpu.sra(cpu.registers.h);
             2
         }
         0x2D => {
-            // SRA L
-            cpu.registers.L = cpu.SRA(cpu.registers.L);
+            // sra l
+            cpu.registers.l = cpu.sra(cpu.registers.l);
             2
         }
         0x2E => {
-            // SRA (HL)
+            // sra (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.SRA(value);
+            let result = cpu.sra(value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x2F => {
-            // SRA A
-            cpu.registers.A = cpu.SRA(cpu.registers.A);
+            // sra A
+            cpu.registers.a = cpu.sra(cpu.registers.a);
             2
         }
         0x30 => {
-            // SWAP B
-            cpu.registers.B = cpu.SWAP(cpu.registers.B);
+            // swap B
+            cpu.registers.b = cpu.swap(cpu.registers.b);
             2
         }
         0x31 => {
-            // SWAP C
-            cpu.registers.C = cpu.SWAP(cpu.registers.C);
+            // swap C
+            cpu.registers.c = cpu.swap(cpu.registers.c);
             2
         }
         0x32 => {
-            // SWAP D
-            cpu.registers.D = cpu.SWAP(cpu.registers.D);
+            // swap D
+            cpu.registers.d = cpu.swap(cpu.registers.d);
             2
         }
         0x33 => {
-            // SWAP E
-            cpu.registers.E = cpu.SWAP(cpu.registers.E);
+            // swap E
+            cpu.registers.e = cpu.swap(cpu.registers.e);
             2
         }
         0x34 => {
-            // SWAP H
-            cpu.registers.H = cpu.SWAP(cpu.registers.H);
+            // swap h
+            cpu.registers.h = cpu.swap(cpu.registers.h);
             2
         }
         0x35 => {
-            // SWAP L
-            cpu.registers.L = cpu.SWAP(cpu.registers.L);
+            // swap l
+            cpu.registers.l = cpu.swap(cpu.registers.l);
             2
         }
         0x36 => {
-            // SWAP (HL)
+            // swap (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.SWAP(value);
+            let result = cpu.swap(value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x37 => {
-            // SWAP A
-            cpu.registers.A = cpu.SWAP(cpu.registers.A);
+            // swap A
+            cpu.registers.a = cpu.swap(cpu.registers.a);
             2
         }
         0x38 => {
-            // SRL B
-            cpu.registers.B = cpu.SRL(cpu.registers.B);
+            // srl B
+            cpu.registers.b = cpu.srl(cpu.registers.b);
             2
         }
         0x39 => {
-            // SRL C
-            cpu.registers.C = cpu.SRL(cpu.registers.C);
+            // srl C
+            cpu.registers.c = cpu.srl(cpu.registers.c);
             2
         }
         0x3A => {
-            // SRL D
-            cpu.registers.D = cpu.SRL(cpu.registers.D);
+            // srl D
+            cpu.registers.d = cpu.srl(cpu.registers.d);
             2
         }
         0x3B => {
-            // SRL E
-            cpu.registers.E = cpu.SRL(cpu.registers.E);
+            // srl E
+            cpu.registers.e = cpu.srl(cpu.registers.e);
             2
         }
         0x3C => {
-            // SRL H
-            cpu.registers.H = cpu.SRL(cpu.registers.H);
+            // srl h
+            cpu.registers.h = cpu.srl(cpu.registers.h);
             2
         }
         0x3D => {
-            // SRL L
-            cpu.registers.L = cpu.SRL(cpu.registers.L);
+            // srl l
+            cpu.registers.l = cpu.srl(cpu.registers.l);
             2
         }
         0x3E => {
-            // SRL (HL)
+            // srl (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.SRL(value);
+            let result = cpu.srl(value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x3F => {
-            // SRL A
-            cpu.registers.A = cpu.SRL(cpu.registers.A);
+            // srl A
+            cpu.registers.a = cpu.srl(cpu.registers.a);
             2
         }
         0x40 => {
-            // BIT 0, B
-            cpu.BIT(0, cpu.registers.B);
+            // bit 0, B
+            cpu.bit(0, cpu.registers.b);
             2
         }
         0x41 => {
-            // BIT 0, C
-            cpu.BIT(0, cpu.registers.C);
+            // bit 0, C
+            cpu.bit(0, cpu.registers.c);
             2
         }
         0x42 => {
-            // BIT 0, D
-            cpu.BIT(0, cpu.registers.D);
+            // bit 0, D
+            cpu.bit(0, cpu.registers.d);
             2
         }
         0x43 => {
-            // BIT 0, E
-            cpu.BIT(0, cpu.registers.E);
+            // bit 0, E
+            cpu.bit(0, cpu.registers.e);
             2
         }
         0x44 => {
-            // BIT 0, H
-            cpu.BIT(0, cpu.registers.H);
+            // bit 0, h
+            cpu.bit(0, cpu.registers.h);
             2
         }
         0x45 => {
-            // BIT 0, L
-            cpu.BIT(0, cpu.registers.L);
+            // bit 0, l
+            cpu.bit(0, cpu.registers.l);
             2
         }
         0x46 => {
-            // BIT 0, (HL)
+            // bit 0, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            cpu.BIT(0, value);
+            cpu.bit(0, value);
             3
         }
         0x47 => {
-            // BIT 0, A
-            cpu.BIT(0, cpu.registers.A);
+            // bit 0, A
+            cpu.bit(0, cpu.registers.a);
             2
         }
         0x48 => {
-            // BIT 1, B
-            cpu.BIT(1, cpu.registers.B);
+            // bit 1, B
+            cpu.bit(1, cpu.registers.b);
             2
         }
         0x49 => {
-            // BIT 1, C
-            cpu.BIT(1, cpu.registers.C);
+            // bit 1, C
+            cpu.bit(1, cpu.registers.c);
             2
         }
         0x4A => {
-            // BIT 1, D
-            cpu.BIT(1, cpu.registers.D);
+            // bit 1, D
+            cpu.bit(1, cpu.registers.d);
             2
         }
         0x4B => {
-            // BIT 1, E
-            cpu.BIT(1, cpu.registers.E);
+            // bit 1, E
+            cpu.bit(1, cpu.registers.e);
             2
         }
         0x4C => {
-            // BIT 1, H
-            cpu.BIT(1, cpu.registers.H);
+            // bit 1, h
+            cpu.bit(1, cpu.registers.h);
             2
         }
         0x4D => {
-            // BIT 1, L
-            cpu.BIT(1, cpu.registers.L);
+            // bit 1, l
+            cpu.bit(1, cpu.registers.l);
             2
         }
         0x4E => {
-            // BIT 1, (HL)
+            // bit 1, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            cpu.BIT(1, value);
+            cpu.bit(1, value);
             3
         }
         0x4F => {
-            // BIT 1, A
-            cpu.BIT(1, cpu.registers.A);
+            // bit 1, A
+            cpu.bit(1, cpu.registers.a);
             2
         }
         0x50 => {
-            // BIT 2, B
-            cpu.BIT(2, cpu.registers.B);
+            // bit 2, B
+            cpu.bit(2, cpu.registers.b);
             2
         }
         0x51 => {
-            // BIT 2, C
-            cpu.BIT(2, cpu.registers.C);
+            // bit 2, C
+            cpu.bit(2, cpu.registers.c);
             2
         }
         0x52 => {
-            // BIT 2, D
-            cpu.BIT(2, cpu.registers.D);
+            // bit 2, D
+            cpu.bit(2, cpu.registers.d);
             2
         }
         0x53 => {
-            // BIT 2, E
-            cpu.BIT(2, cpu.registers.E);
+            // bit 2, E
+            cpu.bit(2, cpu.registers.e);
             2
         }
         0x54 => {
-            // BIT 2, H
-            cpu.BIT(2, cpu.registers.H);
+            // bit 2, h
+            cpu.bit(2, cpu.registers.h);
             2
         }
         0x55 => {
-            // BIT 2, L
-            cpu.BIT(2, cpu.registers.L);
+            // bit 2, l
+            cpu.bit(2, cpu.registers.l);
             2
         }
         0x56 => {
-            // BIT 2, (HL)
+            // bit 2, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            cpu.BIT(2, value);
+            cpu.bit(2, value);
             3
         }
         0x57 => {
-            // BIT 2, A
-            cpu.BIT(2, cpu.registers.A);
+            // bit 2, A
+            cpu.bit(2, cpu.registers.a);
             2
         }
         0x58 => {
-            // BIT 3, B
-            cpu.BIT(3, cpu.registers.B);
+            // bit 3, B
+            cpu.bit(3, cpu.registers.b);
             2
         }
         0x59 => {
-            // BIT 3, C
-            cpu.BIT(3, cpu.registers.C);
+            // bit 3, C
+            cpu.bit(3, cpu.registers.c);
             2
         }
         0x5A => {
-            // BIT 3, D
-            cpu.BIT(3, cpu.registers.D);
+            // bit 3, D
+            cpu.bit(3, cpu.registers.d);
             2
         }
         0x5B => {
-            // BIT 3, E
-            cpu.BIT(3, cpu.registers.E);
+            // bit 3, E
+            cpu.bit(3, cpu.registers.e);
             2
         }
         0x5C => {
-            // BIT 3, H
-            cpu.BIT(3, cpu.registers.H);
+            // bit 3, h
+            cpu.bit(3, cpu.registers.h);
             2
         }
         0x5D => {
-            // BIT 3, L
-            cpu.BIT(3, cpu.registers.L);
+            // bit 3, l
+            cpu.bit(3, cpu.registers.l);
             2
         }
         0x5E => {
-            // BIT 3, (HL)
+            // bit 3, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            cpu.BIT(3, value);
+            cpu.bit(3, value);
             3
         }
         0x5F => {
-            // BIT 3, A
-            cpu.BIT(3, cpu.registers.A);
+            // bit 3, A
+            cpu.bit(3, cpu.registers.a);
             2
         }
         0x60 => {
-            // BIT 4, B
-            cpu.BIT(4, cpu.registers.B);
+            // bit 4, B
+            cpu.bit(4, cpu.registers.b);
             2
         }
         0x61 => {
-            // BIT 4, C
-            cpu.BIT(4, cpu.registers.C);
+            // bit 4, C
+            cpu.bit(4, cpu.registers.c);
             2
         }
         0x62 => {
-            // BIT 4, D
-            cpu.BIT(4, cpu.registers.D);
+            // bit 4, D
+            cpu.bit(4, cpu.registers.d);
             2
         }
         0x63 => {
-            // BIT 4, E
-            cpu.BIT(4, cpu.registers.E);
+            // bit 4, E
+            cpu.bit(4, cpu.registers.e);
             2
         }
         0x64 => {
-            // BIT 4, H
-            cpu.BIT(4, cpu.registers.H);
+            // bit 4, h
+            cpu.bit(4, cpu.registers.h);
             2
         }
         0x65 => {
-            // BIT 4, L
-            cpu.BIT(4, cpu.registers.L);
+            // bit 4, l
+            cpu.bit(4, cpu.registers.l);
             2
         }
         0x66 => {
-            // BIT 4, (HL)
+            // bit 4, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            cpu.BIT(4, value);
+            cpu.bit(4, value);
             3
         }
         0x67 => {
-            // BIT 4, A
-            cpu.BIT(4, cpu.registers.A);
+            // bit 4, A
+            cpu.bit(4, cpu.registers.a);
             2
         }
         0x68 => {
-            // BIT 5, B
-            cpu.BIT(5, cpu.registers.B);
+            // bit 5, B
+            cpu.bit(5, cpu.registers.b);
             2
         }
         0x69 => {
-            // BIT 5, C
-            cpu.BIT(5, cpu.registers.C);
+            // bit 5, C
+            cpu.bit(5, cpu.registers.c);
             2
         }
         0x6A => {
-            // BIT 5, D
-            cpu.BIT(5, cpu.registers.D);
+            // bit 5, D
+            cpu.bit(5, cpu.registers.d);
             2
         }
         0x6B => {
-            // BIT 5, E
-            cpu.BIT(5, cpu.registers.E);
+            // bit 5, E
+            cpu.bit(5, cpu.registers.e);
             2
         }
         0x6C => {
-            // BIT 5, H
-            cpu.BIT(5, cpu.registers.H);
+            // bit 5, h
+            cpu.bit(5, cpu.registers.h);
             2
         }
         0x6D => {
-            // BIT 5, L
-            cpu.BIT(5, cpu.registers.L);
+            // bit 5, l
+            cpu.bit(5, cpu.registers.l);
             2
         }
         0x6E => {
-            // BIT 5, (HL)
+            // bit 5, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            cpu.BIT(5, value);
+            cpu.bit(5, value);
             3
         }
         0x6F => {
-            // BIT 5, A
-            cpu.BIT(5, cpu.registers.A);
+            // bit 5, A
+            cpu.bit(5, cpu.registers.a);
             2
         }
         0x70 => {
-            // BIT 6, B
-            cpu.BIT(6, cpu.registers.B);
+            // bit 6, B
+            cpu.bit(6, cpu.registers.b);
             2
         }
         0x71 => {
-            // BIT 6, C
-            cpu.BIT(6, cpu.registers.C);
+            // bit 6, C
+            cpu.bit(6, cpu.registers.c);
             2
         }
         0x72 => {
-            // BIT 6, D
-            cpu.BIT(6, cpu.registers.D);
+            // bit 6, D
+            cpu.bit(6, cpu.registers.d);
             2
         }
         0x73 => {
-            // BIT 6, E
-            cpu.BIT(6, cpu.registers.E);
+            // bit 6, E
+            cpu.bit(6, cpu.registers.e);
             2
         }
         0x74 => {
-            // BIT 6, H
-            cpu.BIT(6, cpu.registers.H);
+            // bit 6, h
+            cpu.bit(6, cpu.registers.h);
             2
         }
         0x75 => {
-            // BIT 6, L
-            cpu.BIT(6, cpu.registers.L);
+            // bit 6, l
+            cpu.bit(6, cpu.registers.l);
             2
         }
         0x76 => {
-            // BIT 6, (HL)
+            // bit 6, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            cpu.BIT(6, value);
+            cpu.bit(6, value);
             3
         }
         0x77 => {
-            // BIT 6, A
-            cpu.BIT(6, cpu.registers.A);
+            // bit 6, A
+            cpu.bit(6, cpu.registers.a);
             2
         }
         0x78 => {
-            // BIT 7, B
-            cpu.BIT(7, cpu.registers.B);
+            // bit 7, B
+            cpu.bit(7, cpu.registers.b);
             2
         }
         0x79 => {
-            // BIT 7, C
-            cpu.BIT(7, cpu.registers.C);
+            // bit 7, C
+            cpu.bit(7, cpu.registers.c);
             2
         }
         0x7A => {
-            // BIT 7, D
-            cpu.BIT(7, cpu.registers.D);
+            // bit 7, D
+            cpu.bit(7, cpu.registers.d);
             2
         }
         0x7B => {
-            // BIT 7, E
-            cpu.BIT(7, cpu.registers.E);
+            // bit 7, E
+            cpu.bit(7, cpu.registers.e);
             2
         }
         0x7C => {
-            // BIT 7, H
-            cpu.BIT(7, cpu.registers.H);
+            // bit 7, h
+            cpu.bit(7, cpu.registers.h);
             2
         }
         0x7D => {
-            // BIT 7, L
-            cpu.BIT(7, cpu.registers.L);
+            // bit 7, l
+            cpu.bit(7, cpu.registers.l);
             2
         }
         0x7E => {
-            // BIT 7, (HL)
+            // bit 7, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            cpu.BIT(7, value);
+            cpu.bit(7, value);
             3
         }
         0x7F => {
-            // BIT 7, A
-            cpu.BIT(7, cpu.registers.A);
+            // bit 7, A
+            cpu.bit(7, cpu.registers.a);
             2
         }
         0x80 => {
-            // RES 0, B
-            cpu.registers.B = cpu.RES(0, cpu.registers.B);
+            // res 0, B
+            cpu.registers.b = cpu.res(0, cpu.registers.b);
             2
         }
         0x81 => {
-            // RES 0, C
-            cpu.registers.C = cpu.RES(0, cpu.registers.C);
+            // res 0, C
+            cpu.registers.c = cpu.res(0, cpu.registers.c);
             2
         }
         0x82 => {
-            // RES 0, D
-            cpu.registers.D = cpu.RES(0, cpu.registers.D);
+            // res 0, D
+            cpu.registers.d = cpu.res(0, cpu.registers.d);
             2
         }
         0x83 => {
-            // RES 0, E
-            cpu.registers.E = cpu.RES(0, cpu.registers.E);
+            // res 0, E
+            cpu.registers.e = cpu.res(0, cpu.registers.e);
             2
         }
         0x84 => {
-            // RES 0, H
-            cpu.registers.H = cpu.RES(0, cpu.registers.H);
+            // res 0, h
+            cpu.registers.h = cpu.res(0, cpu.registers.h);
             2
         }
         0x85 => {
-            // RES 0, L
-            cpu.registers.L = cpu.RES(0, cpu.registers.L);
+            // res 0, l
+            cpu.registers.l = cpu.res(0, cpu.registers.l);
             2
         }
         0x86 => {
-            // RES 0, (HL)
+            // res 0, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.RES(0, value);
+            let result = cpu.res(0, value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x87 => {
-            // RES 0, A
-            cpu.registers.A = cpu.RES(0, cpu.registers.A);
+            // res 0, A
+            cpu.registers.a = cpu.res(0, cpu.registers.a);
             2
         }
         0x88 => {
-            // RES 1, B
-            cpu.registers.B = cpu.RES(1, cpu.registers.B);
+            // res 1, B
+            cpu.registers.b = cpu.res(1, cpu.registers.b);
             2
         }
         0x89 => {
-            // RES 1, C
-            cpu.registers.C = cpu.RES(1, cpu.registers.C);
+            // res 1, C
+            cpu.registers.c = cpu.res(1, cpu.registers.c);
             2
         }
         0x8A => {
-            // RES 1, D
-            cpu.registers.D = cpu.RES(1, cpu.registers.D);
+            // res 1, D
+            cpu.registers.d = cpu.res(1, cpu.registers.d);
             2
         }
         0x8B => {
-            // RES 1, E
-            cpu.registers.E = cpu.RES(1, cpu.registers.E);
+            // res 1, E
+            cpu.registers.e = cpu.res(1, cpu.registers.e);
             2
         }
         0x8C => {
-            // RES 1, H
-            cpu.registers.H = cpu.RES(1, cpu.registers.H);
+            // res 1, h
+            cpu.registers.h = cpu.res(1, cpu.registers.h);
             2
         }
         0x8D => {
-            // RES 1, L
-            cpu.registers.L = cpu.RES(1, cpu.registers.L);
+            // res 1, l
+            cpu.registers.l = cpu.res(1, cpu.registers.l);
             2
         }
         0x8E => {
-            // RES 1, (HL)
+            // res 1, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.RES(1, value);
+            let result = cpu.res(1, value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x8F => {
-            // RES 1, A
-            cpu.registers.A = cpu.RES(1, cpu.registers.A);
+            // res 1, A
+            cpu.registers.a = cpu.res(1, cpu.registers.a);
             2
         }
         0x90 => {
-            // RES 2, B
-            cpu.registers.B = cpu.RES(2, cpu.registers.B);
+            // res 2, B
+            cpu.registers.b = cpu.res(2, cpu.registers.b);
             2
         }
         0x91 => {
-            // RES 2, C
-            cpu.registers.C = cpu.RES(2, cpu.registers.C);
+            // res 2, C
+            cpu.registers.c = cpu.res(2, cpu.registers.c);
             2
         }
         0x92 => {
-            // RES 2, D
-            cpu.registers.D = cpu.RES(2, cpu.registers.D);
+            // res 2, D
+            cpu.registers.d = cpu.res(2, cpu.registers.d);
             2
         }
         0x93 => {
-            // RES 2, E
-            cpu.registers.E = cpu.RES(2, cpu.registers.E);
+            // res 2, E
+            cpu.registers.e = cpu.res(2, cpu.registers.e);
             2
         }
         0x94 => {
-            // RES 2, H
-            cpu.registers.H = cpu.RES(2, cpu.registers.H);
+            // res 2, h
+            cpu.registers.h = cpu.res(2, cpu.registers.h);
             2
         }
         0x95 => {
-            // RES 2, L
-            cpu.registers.L = cpu.RES(2, cpu.registers.L);
+            // res 2, l
+            cpu.registers.l = cpu.res(2, cpu.registers.l);
             2
         }
         0x96 => {
-            // RES 2, (HL)
+            // res 2, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.RES(2, value);
+            let result = cpu.res(2, value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x97 => {
-            // RES 2, A
-            cpu.registers.A = cpu.RES(2, cpu.registers.A);
+            // res 2, A
+            cpu.registers.a = cpu.res(2, cpu.registers.a);
             2
         }
         0x98 => {
-            // RES 3, B
-            cpu.registers.B = cpu.RES(3, cpu.registers.B);
+            // res 3, B
+            cpu.registers.b = cpu.res(3, cpu.registers.b);
             2
         }
         0x99 => {
-            // RES 3, C
-            cpu.registers.C = cpu.RES(3, cpu.registers.C);
+            // res 3, C
+            cpu.registers.c = cpu.res(3, cpu.registers.c);
             2
         }
         0x9A => {
-            // RES 3, D
-            cpu.registers.D = cpu.RES(3, cpu.registers.D);
+            // res 3, D
+            cpu.registers.d = cpu.res(3, cpu.registers.d);
             2
         }
         0x9B => {
-            // RES 3, E
-            cpu.registers.E = cpu.RES(3, cpu.registers.E);
+            // res 3, E
+            cpu.registers.e = cpu.res(3, cpu.registers.e);
             2
         }
         0x9C => {
-            // RES 3, H
-            cpu.registers.H = cpu.RES(3, cpu.registers.H);
+            // res 3, h
+            cpu.registers.h = cpu.res(3, cpu.registers.h);
             2
         }
         0x9D => {
-            // RES 3, L
-            cpu.registers.L = cpu.RES(3, cpu.registers.L);
+            // res 3, l
+            cpu.registers.l = cpu.res(3, cpu.registers.l);
             2
         }
         0x9E => {
-            // RES 3, (HL)
+            // res 3, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.RES(3, value);
+            let result = cpu.res(3, value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x9F => {
-            // RES 3, A
-            cpu.registers.A = cpu.RES(3, cpu.registers.A);
+            // res 3, A
+            cpu.registers.a = cpu.res(3, cpu.registers.a);
             2
         }
         0xA0 => {
-            // RES 4, B
-            cpu.registers.B = cpu.RES(4, cpu.registers.B);
+            // res 4, B
+            cpu.registers.b = cpu.res(4, cpu.registers.b);
             2
         }
         0xA1 => {
-            // RES 4, C
-            cpu.registers.C = cpu.RES(4, cpu.registers.C);
+            // res 4, C
+            cpu.registers.c = cpu.res(4, cpu.registers.c);
             2
         }
         0xA2 => {
-            // RES 4, D
-            cpu.registers.D = cpu.RES(4, cpu.registers.D);
+            // res 4, D
+            cpu.registers.d = cpu.res(4, cpu.registers.d);
             2
         }
         0xA3 => {
-            // RES 4, E
-            cpu.registers.E = cpu.RES(4, cpu.registers.E);
+            // res 4, E
+            cpu.registers.e = cpu.res(4, cpu.registers.e);
             2
         }
         0xA4 => {
-            // RES 4, H
-            cpu.registers.H = cpu.RES(4, cpu.registers.H);
+            // res 4, h
+            cpu.registers.h = cpu.res(4, cpu.registers.h);
             2
         }
         0xA5 => {
-            // RES 4, L
-            cpu.registers.L = cpu.RES(4, cpu.registers.L);
+            // res 4, l
+            cpu.registers.l = cpu.res(4, cpu.registers.l);
             2
         }
         0xA6 => {
-            // RES 4, (HL)
+            // res 4, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.RES(4, value);
+            let result = cpu.res(4, value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xA7 => {
-            // RES 4, A
-            cpu.registers.A = cpu.RES(4, cpu.registers.A);
+            // res 4, A
+            cpu.registers.a = cpu.res(4, cpu.registers.a);
             2
         }
         0xA8 => {
-            // RES 5, B
-            cpu.registers.B = cpu.RES(5, cpu.registers.B);
+            // res 5, B
+            cpu.registers.b = cpu.res(5, cpu.registers.b);
             2
         }
         0xA9 => {
-            // RES 5, C
-            cpu.registers.C = cpu.RES(5, cpu.registers.C);
+            // res 5, C
+            cpu.registers.c = cpu.res(5, cpu.registers.c);
             2
         }
         0xAA => {
-            // RES 5, D
-            cpu.registers.D = cpu.RES(5, cpu.registers.D);
+            // res 5, D
+            cpu.registers.d = cpu.res(5, cpu.registers.d);
             2
         }
         0xAB => {
-            // RES 5, E
-            cpu.registers.E = cpu.RES(5, cpu.registers.E);
+            // res 5, E
+            cpu.registers.e = cpu.res(5, cpu.registers.e);
             2
         }
         0xAC => {
-            // RES 5, H
-            cpu.registers.H = cpu.RES(5, cpu.registers.H);
+            // res 5, h
+            cpu.registers.h = cpu.res(5, cpu.registers.h);
             2
         }
         0xAD => {
-            // RES 5, L
-            cpu.registers.L = cpu.RES(5, cpu.registers.L);
+            // res 5, l
+            cpu.registers.l = cpu.res(5, cpu.registers.l);
             2
         }
         0xAE => {
-            // RES 5, (HL)
+            // res 5, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.RES(5, value);
+            let result = cpu.res(5, value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xAF => {
-            // RES 5, A
-            cpu.registers.A = cpu.RES(5, cpu.registers.A);
+            // res 5, A
+            cpu.registers.a = cpu.res(5, cpu.registers.a);
             2
         }
         0xB0 => {
-            // RES 6, B
-            cpu.registers.B = cpu.RES(6, cpu.registers.B);
+            // res 6, B
+            cpu.registers.b = cpu.res(6, cpu.registers.b);
             2
         }
         0xB1 => {
-            // RES 6, C
-            cpu.registers.C = cpu.RES(6, cpu.registers.C);
+            // res 6, C
+            cpu.registers.c = cpu.res(6, cpu.registers.c);
             2
         }
         0xB2 => {
-            // RES 6, D
-            cpu.registers.D = cpu.RES(6, cpu.registers.D);
+            // res 6, D
+            cpu.registers.d = cpu.res(6, cpu.registers.d);
             2
         }
         0xB3 => {
-            // RES 6, E
-            cpu.registers.E = cpu.RES(6, cpu.registers.E);
+            // res 6, E
+            cpu.registers.e = cpu.res(6, cpu.registers.e);
             2
         }
         0xB4 => {
-            // RES 6, H
-            cpu.registers.H = cpu.RES(6, cpu.registers.H);
+            // res 6, h
+            cpu.registers.h = cpu.res(6, cpu.registers.h);
             2
         }
         0xB5 => {
-            // RES 6, L
-            cpu.registers.L = cpu.RES(6, cpu.registers.L);
+            // res 6, l
+            cpu.registers.l = cpu.res(6, cpu.registers.l);
             2
         }
         0xB6 => {
-            // RES 6, (HL)
+            // res 6, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.RES(6, value);
+            let result = cpu.res(6, value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xB7 => {
-            // RES 6, A
-            cpu.registers.A = cpu.RES(6, cpu.registers.A);
+            // res 6, A
+            cpu.registers.a = cpu.res(6, cpu.registers.a);
             2
         }
         0xB8 => {
-            // RES 7, B
-            cpu.registers.B = cpu.RES(7, cpu.registers.B);
+            // res 7, B
+            cpu.registers.b = cpu.res(7, cpu.registers.b);
             2
         }
         0xB9 => {
-            // RES 7, C
-            cpu.registers.C = cpu.RES(7, cpu.registers.C);
+            // res 7, C
+            cpu.registers.c = cpu.res(7, cpu.registers.c);
             2
         }
         0xBA => {
-            // RES 7, D
-            cpu.registers.D = cpu.RES(7, cpu.registers.D);
+            // res 7, D
+            cpu.registers.d = cpu.res(7, cpu.registers.d);
             2
         }
         0xBB => {
-            // RES 7, E
-            cpu.registers.E = cpu.RES(7, cpu.registers.E);
+            // res 7, E
+            cpu.registers.e = cpu.res(7, cpu.registers.e);
             2
         }
         0xBC => {
-            // RES 7, H
-            cpu.registers.H = cpu.RES(7, cpu.registers.H);
+            // res 7, h
+            cpu.registers.h = cpu.res(7, cpu.registers.h);
             2
         }
         0xBD => {
-            // RES 7, L
-            cpu.registers.L = cpu.RES(7, cpu.registers.L);
+            // res 7, l
+            cpu.registers.l = cpu.res(7, cpu.registers.l);
             2
         }
         0xBE => {
-            // RES 7, (HL)
+            // res 7, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.RES(7, value);
+            let result = cpu.res(7, value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xBF => {
-            // RES 7, A
-            cpu.registers.A = cpu.RES(7, cpu.registers.A);
+            // res 7, A
+            cpu.registers.a = cpu.res(7, cpu.registers.a);
             2
         }
         0xC0 => {
-            // SET 0, B
-            cpu.registers.B = cpu.SET(0, cpu.registers.B);
+            // set 0, B
+            cpu.registers.b = cpu.set(0, cpu.registers.b);
             2
         }
         0xC1 => {
-            // SET 0, C
-            cpu.registers.C = cpu.SET(0, cpu.registers.C);
+            // set 0, C
+            cpu.registers.c = cpu.set(0, cpu.registers.c);
             2
         }
         0xC2 => {
-            // SET 0, D
-            cpu.registers.D = cpu.SET(0, cpu.registers.D);
+            // set 0, D
+            cpu.registers.d = cpu.set(0, cpu.registers.d);
             2
         }
         0xC3 => {
-            // SET 0, E
-            cpu.registers.E = cpu.SET(0, cpu.registers.E);
+            // set 0, E
+            cpu.registers.e = cpu.set(0, cpu.registers.e);
             2
         }
         0xC4 => {
-            // SET 0, H
-            cpu.registers.H = cpu.SET(0, cpu.registers.H);
+            // set 0, h
+            cpu.registers.h = cpu.set(0, cpu.registers.h);
             2
         }
         0xC5 => {
-            // SET 0, L
-            cpu.registers.L = cpu.SET(0, cpu.registers.L);
+            // set 0, l
+            cpu.registers.l = cpu.set(0, cpu.registers.l);
             2
         }
         0xC6 => {
-            // SET 0, (HL)
+            // set 0, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.SET(0, value);
+            let result = cpu.set(0, value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xC7 => {
-            // SET 0, A
-            cpu.registers.A = cpu.SET(0, cpu.registers.A);
+            // set 0, A
+            cpu.registers.a = cpu.set(0, cpu.registers.a);
             2
         }
         0xC8 => {
-            // SET 1, B
-            cpu.registers.B = cpu.SET(1, cpu.registers.B);
+            // set 1, B
+            cpu.registers.b = cpu.set(1, cpu.registers.b);
             2
         }
         0xC9 => {
-            // SET 1, C
-            cpu.registers.C = cpu.SET(1, cpu.registers.C);
+            // set 1, C
+            cpu.registers.c = cpu.set(1, cpu.registers.c);
             2
         }
         0xCA => {
-            // SET 1, D
-            cpu.registers.D = cpu.SET(1, cpu.registers.D);
+            // set 1, D
+            cpu.registers.d = cpu.set(1, cpu.registers.d);
             2
         }
         0xCB => {
-            // SET 1, E
-            cpu.registers.E = cpu.SET(1, cpu.registers.E);
+            // set 1, E
+            cpu.registers.e = cpu.set(1, cpu.registers.e);
             2
         }
         0xCC => {
-            // SET 1, H
-            cpu.registers.H = cpu.SET(1, cpu.registers.H);
+            // set 1, h
+            cpu.registers.h = cpu.set(1, cpu.registers.h);
             2
         }
         0xCD => {
-            // SET 1, L
-            cpu.registers.L = cpu.SET(1, cpu.registers.L);
+            // set 1, l
+            cpu.registers.l = cpu.set(1, cpu.registers.l);
             2
         }
         0xCE => {
-            // SET 1, (HL)
+            // set 1, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.SET(1, value);
+            let result = cpu.set(1, value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xCF => {
-            // SET 1, A
-            cpu.registers.A = cpu.SET(1, cpu.registers.A);
+            // set 1, A
+            cpu.registers.a = cpu.set(1, cpu.registers.a);
             2
         }
         0xD0 => {
-            // SET 2, B
-            cpu.registers.B = cpu.SET(2, cpu.registers.B);
+            // set 2, B
+            cpu.registers.b = cpu.set(2, cpu.registers.b);
             2
         }
         0xD1 => {
-            // SET 2, C
-            cpu.registers.C = cpu.SET(2, cpu.registers.C);
+            // set 2, C
+            cpu.registers.c = cpu.set(2, cpu.registers.c);
             2
         }
         0xD2 => {
-            // SET 2, D
-            cpu.registers.D = cpu.SET(2, cpu.registers.D);
+            // set 2, D
+            cpu.registers.d = cpu.set(2, cpu.registers.d);
             2
         }
         0xD3 => {
-            // SET 2, E
-            cpu.registers.E = cpu.SET(2, cpu.registers.E);
+            // set 2, E
+            cpu.registers.e = cpu.set(2, cpu.registers.e);
             2
         }
         0xD4 => {
-            // SET 2, H
-            cpu.registers.H = cpu.SET(2, cpu.registers.H);
+            // set 2, h
+            cpu.registers.h = cpu.set(2, cpu.registers.h);
             2
         }
         0xD5 => {
-            // SET 2, L
-            cpu.registers.L = cpu.SET(2, cpu.registers.L);
+            // set 2, l
+            cpu.registers.l = cpu.set(2, cpu.registers.l);
             2
         }
         0xD6 => {
-            // SET 2, (HL)
+            // set 2, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.SET(2, value);
+            let result = cpu.set(2, value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xD7 => {
-            // SET 2, A
-            cpu.registers.A = cpu.SET(2, cpu.registers.A);
+            // set 2, A
+            cpu.registers.a = cpu.set(2, cpu.registers.a);
             2
         }
         0xD8 => {
-            // SET 3, B
-            cpu.registers.B = cpu.SET(3, cpu.registers.B);
+            // set 3, B
+            cpu.registers.b = cpu.set(3, cpu.registers.b);
             2
         }
         0xD9 => {
-            // SET 3, C
-            cpu.registers.C = cpu.SET(3, cpu.registers.C);
+            // set 3, C
+            cpu.registers.c = cpu.set(3, cpu.registers.c);
             2
         }
         0xDA => {
-            // SET 3, D
-            cpu.registers.D = cpu.SET(3, cpu.registers.D);
+            // set 3, D
+            cpu.registers.d = cpu.set(3, cpu.registers.d);
             2
         }
         0xDB => {
-            // SET 3, E
-            cpu.registers.E = cpu.SET(3, cpu.registers.E);
+            // set 3, E
+            cpu.registers.e = cpu.set(3, cpu.registers.e);
             2
         }
         0xDC => {
-            // SET 3, H
-            cpu.registers.H = cpu.SET(3, cpu.registers.H);
+            // set 3, h
+            cpu.registers.h = cpu.set(3, cpu.registers.h);
             2
         }
         0xDD => {
-            // SET 3, L
-            cpu.registers.L = cpu.SET(3, cpu.registers.L);
+            // set 3, l
+            cpu.registers.l = cpu.set(3, cpu.registers.l);
             2
         }
         0xDE => {
-            // SET 3, (HL)
+            // set 3, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.SET(3, value);
+            let result = cpu.set(3, value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xDF => {
-            // SET 3, A
-            cpu.registers.A = cpu.SET(3, cpu.registers.A);
+            // set 3, A
+            cpu.registers.a = cpu.set(3, cpu.registers.a);
             2
         }
         0xE0 => {
-            // SET 4, B
-            cpu.registers.B = cpu.SET(4, cpu.registers.B);
+            // set 4, B
+            cpu.registers.b = cpu.set(4, cpu.registers.b);
             2
         }
         0xE1 => {
-            // SET 4, C
-            cpu.registers.C = cpu.SET(4, cpu.registers.C);
+            // set 4, C
+            cpu.registers.c = cpu.set(4, cpu.registers.c);
             2
         }
         0xE2 => {
-            // SET 4, D
-            cpu.registers.D = cpu.SET(4, cpu.registers.D);
+            // set 4, D
+            cpu.registers.d = cpu.set(4, cpu.registers.d);
             2
         }
         0xE3 => {
-            // SET 4, E
-            cpu.registers.E = cpu.SET(4, cpu.registers.E);
+            // set 4, E
+            cpu.registers.e = cpu.set(4, cpu.registers.e);
             2
         }
         0xE4 => {
-            // SET 4, H
-            cpu.registers.H = cpu.SET(4, cpu.registers.H);
+            // set 4, h
+            cpu.registers.h = cpu.set(4, cpu.registers.h);
             2
         }
         0xE5 => {
-            // SET 4, L
-            cpu.registers.L = cpu.SET(4, cpu.registers.L);
+            // set 4, l
+            cpu.registers.l = cpu.set(4, cpu.registers.l);
             2
         }
         0xE6 => {
-            // SET 4, (HL)
+            // set 4, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.SET(4, value);
+            let result = cpu.set(4, value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xE7 => {
-            // SET 4, A
-            cpu.registers.A = cpu.SET(4, cpu.registers.A);
+            // set 4, A
+            cpu.registers.a = cpu.set(4, cpu.registers.a);
             2
         }
         0xE8 => {
-            // SET 5, B
-            cpu.registers.B = cpu.SET(5, cpu.registers.B);
+            // set 5, B
+            cpu.registers.b = cpu.set(5, cpu.registers.b);
             2
         }
         0xE9 => {
-            // SET 5, C
-            cpu.registers.C = cpu.SET(5, cpu.registers.C);
+            // set 5, C
+            cpu.registers.c = cpu.set(5, cpu.registers.c);
             2
         }
         0xEA => {
-            // SET 5, D
-            cpu.registers.D = cpu.SET(5, cpu.registers.D);
+            // set 5, D
+            cpu.registers.d = cpu.set(5, cpu.registers.d);
             2
         }
         0xEB => {
-            // SET 5, E
-            cpu.registers.E = cpu.SET(5, cpu.registers.E);
+            // set 5, E
+            cpu.registers.e = cpu.set(5, cpu.registers.e);
             2
         }
         0xEC => {
-            // SET 5, H
-            cpu.registers.H = cpu.SET(5, cpu.registers.H);
+            // set 5, h
+            cpu.registers.h = cpu.set(5, cpu.registers.h);
             2
         }
         0xED => {
-            // SET 5, L
-            cpu.registers.L = cpu.SET(5, cpu.registers.L);
+            // set 5, l
+            cpu.registers.l = cpu.set(5, cpu.registers.l);
             2
         }
         0xEE => {
-            // SET 5, (HL)
+            // set 5, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.SET(5, value);
+            let result = cpu.set(5, value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xEF => {
-            // SET 5, A
-            cpu.registers.A = cpu.SET(5, cpu.registers.A);
+            // set 5, A
+            cpu.registers.a = cpu.set(5, cpu.registers.a);
             2
         }
         0xF0 => {
-            // SET 6, B
-            cpu.registers.B = cpu.SET(6, cpu.registers.B);
+            // set 6, B
+            cpu.registers.b = cpu.set(6, cpu.registers.b);
             2
         }
         0xF1 => {
-            // SET 6, C
-            cpu.registers.C = cpu.SET(6, cpu.registers.C);
+            // set 6, C
+            cpu.registers.c = cpu.set(6, cpu.registers.c);
             2
         }
         0xF2 => {
-            // SET 6, D
-            cpu.registers.D = cpu.SET(6, cpu.registers.D);
+            // set 6, D
+            cpu.registers.d = cpu.set(6, cpu.registers.d);
             2
         }
         0xF3 => {
-            // SET 6, E
-            cpu.registers.E = cpu.SET(6, cpu.registers.E);
+            // set 6, E
+            cpu.registers.e = cpu.set(6, cpu.registers.e);
             2
         }
         0xF4 => {
-            // SET 6, H
-            cpu.registers.H = cpu.SET(6, cpu.registers.H);
+            // set 6, h
+            cpu.registers.h = cpu.set(6, cpu.registers.h);
             2
         }
         0xF5 => {
-            // SET 6, L
-            cpu.registers.L = cpu.SET(6, cpu.registers.L);
+            // set 6, l
+            cpu.registers.l = cpu.set(6, cpu.registers.l);
             2
         }
         0xF6 => {
-            // SET 6, (HL)
+            // set 6, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.SET(6, value);
+            let result = cpu.set(6, value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xF7 => {
-            // SET 6, A
-            cpu.registers.A = cpu.SET(6, cpu.registers.A);
+            // set 6, A
+            cpu.registers.a = cpu.set(6, cpu.registers.a);
             2
         }
         0xF8 => {
-            // SET 7, B
-            cpu.registers.B = cpu.SET(7, cpu.registers.B);
+            // set 7, B
+            cpu.registers.b = cpu.set(7, cpu.registers.b);
             2
         }
         0xF9 => {
-            // SET 7, C
-            cpu.registers.C = cpu.SET(7, cpu.registers.C);
+            // set 7, C
+            cpu.registers.c = cpu.set(7, cpu.registers.c);
             2
         }
         0xFA => {
-            // SET 7, D
-            cpu.registers.D = cpu.SET(7, cpu.registers.D);
+            // set 7, D
+            cpu.registers.d = cpu.set(7, cpu.registers.d);
             2
         }
         0xFB => {
-            // SET 7, E
-            cpu.registers.E = cpu.SET(7, cpu.registers.E);
+            // set 7, E
+            cpu.registers.e = cpu.set(7, cpu.registers.e);
             2
         }
         0xFC => {
-            // SET 7, H
-            cpu.registers.H = cpu.SET(7, cpu.registers.H);
+            // set 7, h
+            cpu.registers.h = cpu.set(7, cpu.registers.h);
             2
         }
         0xFD => {
-            // SET 7, L
-            cpu.registers.L = cpu.SET(7, cpu.registers.L);
+            // set 7, l
+            cpu.registers.l = cpu.set(7, cpu.registers.l);
             2
         }
         0xFE => {
-            // SET 7, (HL)
+            // set 7, (HL)
             let value = cpu.mmu.read_byte(cpu.get_hl());
-            let result = cpu.SET(7, value);
+            let result = cpu.set(7, value);
             cpu.mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xFF => {
-            // SET 7, A
-            cpu.registers.A = cpu.SET(7, cpu.registers.A);
+            // set 7, A
+            cpu.registers.a = cpu.set(7, cpu.registers.a);
             2
         }
     }

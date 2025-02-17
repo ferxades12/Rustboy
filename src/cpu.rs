@@ -4,16 +4,16 @@ use crate::op_codes::execute_opcode;
 const DIV_INCREMENT_RATE: u32 = 256 / 4; // M-cycles
 
 pub struct Registers {
-    pub A: u8,
-    pub F: u8,
-    pub B: u8,
-    pub C: u8,
-    pub D: u8,
-    pub E: u8,
-    pub H: u8,
-    pub L: u8,
-    pub PC: u16,
-    pub SP: u16,
+    pub a: u8,
+    pub f: u8,
+    pub b: u8,
+    pub c: u8,
+    pub d: u8,
+    pub e: u8,
+    pub h: u8,
+    pub l: u8,
+    pub pc: u16,
+    pub sp: u16,
 }
 
 pub enum InterruptCode {
@@ -36,16 +36,16 @@ pub enum ControlRegisters {
 impl Registers {
     fn new() -> Registers {
         Registers {
-            A: 0x01,
-            F: 0xB0,
-            B: 0x00,
-            C: 0x13,
-            D: 0x00,
-            E: 0xD8,
-            H: 0x01,
-            L: 0x4D,
-            PC: 0x0100, // Start address of the program
-            SP: 0xFFFE, // Initial stack pointer
+            a: 0x01,
+            f: 0xB0,
+            b: 0x00,
+            c: 0x13,
+            d: 0x00,
+            e: 0xD8,
+            h: 0x01,
+            l: 0x4D,
+            pc: 0x0100, // Start address of the program
+            sp: 0xFFFE, // Initial stack pointer
 
                         /*
                         FLAGS: Bits 7-4 de F
@@ -143,79 +143,79 @@ impl CPU {
     }
 
     pub fn get_af(&self) -> u16 {
-        ((self.registers.A as u16) << 8) | (self.registers.F as u16)
+        ((self.registers.a as u16) << 8) | (self.registers.f as u16)
     }
     pub fn get_bc(&self) -> u16 {
-        ((self.registers.B as u16) << 8) | (self.registers.C as u16)
+        ((self.registers.b as u16) << 8) | (self.registers.c as u16)
     }
     pub fn get_de(&self) -> u16 {
-        ((self.registers.D as u16) << 8) | (self.registers.E as u16)
+        ((self.registers.d as u16) << 8) | (self.registers.e as u16)
     }
     pub fn get_hl(&self) -> u16 {
-        ((self.registers.H as u16) << 8) | (self.registers.L as u16)
+        ((self.registers.h as u16) << 8) | (self.registers.l as u16)
     }
     pub fn set_af(&mut self, value: u16) {
-        self.registers.A = (value >> 8) as u8;
-        self.registers.F = (value & 0xFF) as u8;
+        self.registers.a = (value >> 8) as u8;
+        self.registers.f = (value & 0xFF) as u8;
     }
     pub fn set_bc(&mut self, value: u16) {
-        self.registers.B = (value >> 8) as u8;
-        self.registers.C = (value & 0xFF) as u8;
+        self.registers.b = (value >> 8) as u8;
+        self.registers.c = (value & 0xFF) as u8;
     }
     pub fn set_de(&mut self, value: u16) {
-        self.registers.D = (value >> 8) as u8;
-        self.registers.E = (value & 0xFF) as u8;
+        self.registers.d = (value >> 8) as u8;
+        self.registers.e = (value & 0xFF) as u8;
     }
     pub fn set_hl(&mut self, value: u16) {
-        self.registers.H = (value >> 8) as u8;
-        self.registers.L = (value & 0xFF) as u8;
+        self.registers.h = (value >> 8) as u8;
+        self.registers.l = (value & 0xFF) as u8;
     }
-    pub fn set_ZF(&mut self, value: bool) {
-        self.registers.F = self.registers.F & 0b0111_1111 | (value as u8) << 7;
+    pub fn set_zf(&mut self, value: bool) {
+        self.registers.f = self.registers.f & 0b0111_1111 | (value as u8) << 7;
     }
-    pub fn set_NF(&mut self, value: bool) {
-        self.registers.F = self.registers.F & 0b1011_1111 | (value as u8) << 6;
+    pub fn set_nf(&mut self, value: bool) {
+        self.registers.f = self.registers.f & 0b1011_1111 | (value as u8) << 6;
     }
-    pub fn set_HF(&mut self, value: bool) {
-        self.registers.F = self.registers.F & 0b1101_1111 | (value as u8) << 5;
+    pub fn set_hf(&mut self, value: bool) {
+        self.registers.f = self.registers.f & 0b1101_1111 | (value as u8) << 5;
     }
-    pub fn set_CF(&mut self, value: bool) {
-        self.registers.F = self.registers.F & 0b1110_1111 | (value as u8) << 4;
+    pub fn set_cf(&mut self, value: bool) {
+        self.registers.f = self.registers.f & 0b1110_1111 | (value as u8) << 4;
     }
 
-    pub fn get_ZF(&self) -> bool {
-        (self.registers.F & 0b1000_0000) != 0
+    pub fn get_zf(&self) -> bool {
+        (self.registers.f & 0b1000_0000) != 0
     }
-    pub fn get_NF(&self) -> bool {
-        (self.registers.F & 0b0100_0000) != 0
+    pub fn get_nf(&self) -> bool {
+        (self.registers.f & 0b0100_0000) != 0
     }
-    pub fn get_HF(&self) -> bool {
-        (self.registers.F & 0b0010_0000) != 0
+    pub fn get_hf(&self) -> bool {
+        (self.registers.f & 0b0010_0000) != 0
     }
-    pub fn get_CF(&self) -> bool {
-        (self.registers.F & 0b0001_0000) != 0
+    pub fn get_cf(&self) -> bool {
+        (self.registers.f & 0b0001_0000) != 0
     }
 
     pub fn update_flags(&mut self, zero: bool, carry: bool, half_carry: bool, substract: bool) {
-        self.registers.F = 0;
+        self.registers.f = 0;
         if zero {
-            self.registers.F |= 0b1000_0000;
+            self.registers.f |= 0b1000_0000;
         }
         if substract {
-            self.registers.F |= 0b0100_0000;
+            self.registers.f |= 0b0100_0000;
         }
         if half_carry {
-            self.registers.F |= 0b0010_0000;
+            self.registers.f |= 0b0010_0000;
         }
         if carry {
-            self.registers.F |= 0b0001_0000;
+            self.registers.f |= 0b0001_0000;
         }
     }
 
-    pub fn ADD16(&mut self, n1: u16, n2: u16) -> u16 {
+    pub fn add16(&mut self, n1: u16, n2: u16) -> u16 {
         let (result, carry) = n1.overflowing_add(n2);
         self.update_flags(
-            self.get_ZF(),
+            self.get_zf(),
             carry,
             (n1 & 0x0FFF) + (n2 & 0x0FFF) > 0x0FFF,
             false,
@@ -223,15 +223,15 @@ impl CPU {
         result
     }
 
-    pub fn ADD8(&mut self, n2: u8) -> u8 {
-        let n1 = self.registers.A;
+    pub fn add8(&mut self, n2: u8) -> u8 {
+        let n1 = self.registers.a;
         let (result, carry) = n1.overflowing_add(n2);
         self.update_flags(result == 0, carry, (n1 & 0x0F) + (n2 & 0x0F) > 0x0F, false);
         result
     }
 
-    pub fn SUB(&mut self, n2: u8) -> u8 {
-        let n1 = self.registers.A;
+    pub fn sub(&mut self, n2: u8) -> u8 {
+        let n1 = self.registers.a;
         let (result, carry) = n1.overflowing_sub(n2);
 
         self.update_flags(result == 0, carry, (n1 & 0x0F) < (n2 & 0x0F), true);
@@ -239,9 +239,9 @@ impl CPU {
         result
     }
 
-    pub fn ADC(&mut self, n2: u8) -> u8 {
-        let n1 = self.registers.A;
-        let carry_prev = self.get_CF() as u8;
+    pub fn adc(&mut self, n2: u8) -> u8 {
+        let n1 = self.registers.a;
+        let carry_prev = self.get_cf() as u8;
         let (result, carry1) = n1.overflowing_add(n2);
         let (result, carry2) = result.overflowing_add(carry_prev);
 
@@ -255,9 +255,9 @@ impl CPU {
         result
     }
 
-    pub fn SBC(&mut self, n2: u8) -> u8 {
-        let n1 = self.registers.A;
-        let carry_prev = self.get_CF() as u8;
+    pub fn sbc(&mut self, n2: u8) -> u8 {
+        let n1 = self.registers.a;
+        let carry_prev = self.get_cf() as u8;
         let (result, carry1) = n1.overflowing_sub(n2);
         let (result, carry2) = result.overflowing_sub(carry_prev);
 
@@ -271,37 +271,37 @@ impl CPU {
         result
     }
 
-    pub fn AND(&mut self, num: u8) {
-        self.registers.A &= num;
-        self.update_flags(self.registers.A == 0, false, true, false);
+    pub fn and(&mut self, num: u8) {
+        self.registers.a &= num;
+        self.update_flags(self.registers.a == 0, false, true, false);
     }
 
-    pub fn OR(&mut self, num: u8) {
-        self.registers.A |= num;
-        self.update_flags(self.registers.A == 0, false, false, false);
+    pub fn or(&mut self, num: u8) {
+        self.registers.a |= num;
+        self.update_flags(self.registers.a == 0, false, false, false);
     }
 
-    pub fn XOR(&mut self, num: u8) {
-        self.registers.A ^= num;
-        self.update_flags(self.registers.A == 0, false, false, false);
+    pub fn xor(&mut self, num: u8) {
+        self.registers.a ^= num;
+        self.update_flags(self.registers.a == 0, false, false, false);
     }
 
-    pub fn CP(&mut self, num: u8) {
+    pub fn cp(&mut self, num: u8) {
         // Compara. Comprueba la resta pero no guarda el resultado
-        let (result, carry) = self.registers.A.overflowing_sub(num);
+        let (result, carry) = self.registers.a.overflowing_sub(num);
         self.update_flags(
             result == 0,
             carry,
-            (self.registers.A & 0xF) < (num & 0xF),
+            (self.registers.a & 0xF) < (num & 0xF),
             true,
         );
     }
 
-    pub fn INC(&mut self, value: u8) -> u8 {
+    pub fn inc(&mut self, value: u8) -> u8 {
         let result = value.wrapping_add(1);
         self.update_flags(
             result as u8 == 0,
-            self.get_CF(),
+            self.get_cf(),
             (value & 0x0F) + 1 > 0x0F,
             false,
         );
@@ -309,65 +309,65 @@ impl CPU {
         result
     }
 
-    pub fn DEC(&mut self, value: u8) -> u8 {
+    pub fn dec(&mut self, value: u8) -> u8 {
         let result = value.wrapping_sub(1);
-        self.update_flags(result as u8 == 0, self.get_CF(), (value & 0x0F) < 1, true);
+        self.update_flags(result as u8 == 0, self.get_cf(), (value & 0x0F) < 1, true);
 
         result
     }
 
-    pub fn RLC(&mut self, value: u8) -> u8 {
+    pub fn rlc(&mut self, value: u8) -> u8 {
         let seven = value >> 7 & 1 != 0;
         let result = (value << 1) | (seven as u8);
         self.update_flags(result == 0, seven, false, false);
         result
     }
 
-    pub fn RLCA(&mut self) {
-        self.registers.A = self.RLC(self.registers.A);
-        self.set_ZF(false);
+    pub fn rlca(&mut self) {
+        self.registers.a = self.rlc(self.registers.a);
+        self.set_zf(false);
     }
 
-    pub fn RL(&mut self, value: u8) -> u8 {
+    pub fn rl(&mut self, value: u8) -> u8 {
         let seven = value >> 7 & 1 != 0;
-        let carry = (self.registers.F & 0b0001_0000) >> 4;
+        let carry = (self.registers.f & 0b0001_0000) >> 4;
         let result = (value << 1) | carry;
         self.update_flags(result == 0, seven, false, false);
         result
     }
 
-    pub fn RLA(&mut self) {
-        self.registers.A = self.RL(self.registers.A);
-        self.set_ZF(false);
+    pub fn rla(&mut self) {
+        self.registers.a = self.rl(self.registers.a);
+        self.set_zf(false);
     }
 
-    pub fn RRC(&mut self, value: u8) -> u8 {
+    pub fn rrc(&mut self, value: u8) -> u8 {
         let bit = 0b0000_0001 & value;
         let result = (value >> 1) | (bit << 7);
         self.update_flags(result == 0, bit != 0, false, false);
         result
     }
 
-    pub fn RRCA(&mut self) {
-        self.registers.A = self.RRC(self.registers.A);
-        self.set_ZF(false);
+    pub fn rrca(&mut self) {
+        self.registers.a = self.rrc(self.registers.a);
+        self.set_zf(false);
     }
 
-    pub fn RR(&mut self, value: u8) -> u8 {
+    pub fn rr(&mut self, value: u8) -> u8 {
         let bit = 0b0000_0001 & value;
-        let carry = if self.get_CF() { 1 } else { 0 };
+        let carry = if self.get_cf() { 1 } else { 0 };
         let result = (value >> 1) | (carry << 7);
         self.update_flags(result == 0, bit != 0, false, false);
 
         result
     }
 
-    pub fn RRA(&mut self) {
-        self.registers.A = self.RR(self.registers.A);
-        self.set_ZF(false);
+    pub fn rra(&mut self) {
+        self.registers.a = self.rr(self.registers.a);
+        self.set_zf(false);
     }
 
-    pub fn SLA(&mut self, value: u8) -> u8 {
+    pub fn sla(&mut self, value: u8) -> u8 {
         //TODO
         let seven = value >> 7 & 1 != 0;
         let result = value << 1;
@@ -375,7 +375,7 @@ impl CPU {
         result
     }
 
-    pub fn SRA(&mut self, value: u8) -> u8 {
+    pub fn sra(&mut self, value: u8) -> u8 {
         let seven = value & 0b1000_0000;
         let bit = value & 0b0000_0001;
         let result = (value >> 1) | seven;
@@ -383,7 +383,7 @@ impl CPU {
         result
     }
 
-    pub fn SRL(&mut self, value: u8) -> u8 {
+    pub fn srl(&mut self, value: u8) -> u8 {
         let bit = value & 0b0000_0001;
         let result = value >> 1;
         self.update_flags(result == 0, bit != 0, false, false);
@@ -391,73 +391,73 @@ impl CPU {
     }
 
     pub fn fetch_byte(&mut self) -> u8 {
-        let op = self.mmu.read_byte(self.registers.PC);
-        self.registers.PC += 1;
+        let op = self.mmu.read_byte(self.registers.pc);
+        self.registers.pc += 1;
         op
     }
 
     pub fn fetch_word(&mut self) -> u16 {
-        let op = self.mmu.read_word(self.registers.PC);
-        self.registers.PC += 2;
+        let op = self.mmu.read_word(self.registers.pc);
+        self.registers.pc += 2;
         op
     }
 
-    pub fn JR(&mut self, condition: bool) {
+    pub fn jr(&mut self, condition: bool) {
         let offset: i8 = self.fetch_byte() as i8;
         if condition {
-            self.registers.PC = (self.registers.PC as i32 + offset as i32) as u16;
+            self.registers.pc = (self.registers.pc as i32 + offset as i32) as u16;
         }
     }
 
-    pub fn JP(&mut self, condition: bool) {
+    pub fn jp(&mut self, condition: bool) {
         let address = self.fetch_word();
         if condition {
-            self.registers.PC = address;
+            self.registers.pc = address;
         }
     }
 
-    pub fn RES(&mut self, bit: u8, num: u8) -> u8 {
+    pub fn res(&mut self, bit: u8, num: u8) -> u8 {
         num & !(1 << bit)
     }
 
-    pub fn SET(&mut self, bit: u8, num: u8) -> u8 {
+    pub fn set(&mut self, bit: u8, num: u8) -> u8 {
         num | (1 << bit)
     }
 
-    pub fn BIT(&mut self, bit: u8, num: u8) {
+    pub fn bit(&mut self, bit: u8, num: u8) {
         let res = (num & (1 << bit)) == 0;
 
-        self.update_flags(res, self.get_CF(), true, false);
+        self.update_flags(res, self.get_cf(), true, false);
     }
 
-    pub fn DAA(&mut self) {
-        let mut a = self.registers.A;
+    pub fn daa(&mut self) {
+        let mut a = self.registers.a;
         let mut adjust: u8 = 0;
-        if self.get_HF() || (!self.get_NF() && (a & 0xF) > 9) {
+        if self.get_hf() || (!self.get_nf() && (a & 0xF) > 9) {
             adjust |= 0x06;
         }
-        if self.get_CF() || (!self.get_NF() && a > 0x99) {
+        if self.get_cf() || (!self.get_nf() && a > 0x99) {
             adjust |= 0x60;
-            self.set_CF(true);
+            self.set_cf(true);
         }
-        if self.get_NF() {
+        if self.get_nf() {
             a = a.wrapping_sub(adjust);
         } else {
             a = a.wrapping_add(adjust);
         }
-        self.set_ZF(a == 0);
-        self.set_HF(false);
-        self.registers.A = a;
+        self.set_zf(a == 0);
+        self.set_hf(false);
+        self.registers.a = a;
     }
 
-    pub fn CPL(&mut self) {
-        self.registers.A = !self.registers.A;
+    pub fn cpl(&mut self) {
+        self.registers.a = !self.registers.a;
 
-        self.set_NF(true);
-        self.set_HF(true);
+        self.set_nf(true);
+        self.set_hf(true);
     }
 
-    pub fn SWAP(&mut self, value: u8) -> u8 {
+    pub fn swap(&mut self, value: u8) -> u8 {
         let low = value & 0x0F;
         let high = value & 0xF0;
         let res = (low << 4) | (high >> 4);
@@ -465,46 +465,46 @@ impl CPU {
         res
     }
 
-    pub fn CCF(&mut self) {
-        self.set_CF(!self.get_CF());
-        self.set_NF(false);
-        self.set_HF(false);
+    pub fn ccf(&mut self) {
+        self.set_cf(!self.get_cf());
+        self.set_nf(false);
+        self.set_hf(false);
     }
 
-    pub fn SCF(&mut self) {
-        self.set_CF(true);
-        self.set_NF(false);
-        self.set_HF(false);
+    pub fn scf(&mut self) {
+        self.set_cf(true);
+        self.set_nf(false);
+        self.set_hf(false);
     }
 
-    pub fn POP(&mut self) -> u16 {
-        let value = self.mmu.read_word(self.registers.SP);
-        self.registers.SP = self.registers.SP.wrapping_add(2);
+    pub fn pop(&mut self) -> u16 {
+        let value = self.mmu.read_word(self.registers.sp);
+        self.registers.sp = self.registers.sp.wrapping_add(2);
         value
     }
 
-    pub fn PUSH(&mut self, value: u16) {
-        self.registers.SP -= 2;
-        self.mmu.write_word(self.registers.SP, value);
+    pub fn push(&mut self, value: u16) {
+        self.registers.sp -= 2;
+        self.mmu.write_word(self.registers.sp, value);
     }
 
-    pub fn RST(&mut self, address: u16) {
-        self.PUSH(self.registers.PC);
-        self.registers.PC = address;
+    pub fn rst(&mut self, address: u16) {
+        self.push(self.registers.pc);
+        self.registers.pc = address;
     }
 
-    pub fn RET(&mut self, condition: bool) {
+    pub fn ret(&mut self, condition: bool) {
         if condition {
-            self.registers.PC = self.POP();
+            self.registers.pc = self.pop();
         }
     }
 
-    pub fn CALL(&mut self, condition: bool) {
+    pub fn call(&mut self, condition: bool) {
         let address = self.fetch_word();
 
         if condition {
-            self.PUSH(self.registers.PC);
-            self.registers.PC = address;
+            self.push(self.registers.pc);
+            self.registers.pc = address;
         }
     }
 
@@ -602,36 +602,36 @@ impl CPU {
                 // Check both IME and IF
                 self.ime = false;
                 self.set_if(InterruptCode::Vblank, false); // Unset IME and IF
-                self.PUSH(self.registers.PC); // Push the current program counter onto the stack
-                self.registers.PC = 0x40; // Jump to the interrupt handler
+                self.push(self.registers.pc); // Push the current program counter onto the stack
+                self.registers.pc = 0x40; // Jump to the interrupt handler
                 return 5;
             } else if self.get_if(InterruptCode::Lcd) && self.get_ie(InterruptCode::Lcd) {
                 self.ime = false;
                 self.set_if(InterruptCode::Lcd, false);
                 //cpu.nop() x2
-                self.PUSH(self.registers.PC);
-                self.registers.PC = 0x48;
+                self.push(self.registers.pc);
+                self.registers.pc = 0x48;
                 return 5;
             } else if self.get_if(InterruptCode::Timer) && self.get_ie(InterruptCode::Timer) {
                 self.ime = false;
                 self.set_if(InterruptCode::Timer, false);
                 //cpu.nop() x2
-                self.PUSH(self.registers.PC);
-                self.registers.PC = 0x50;
+                self.push(self.registers.pc);
+                self.registers.pc = 0x50;
                 return 5;
             } else if self.get_if(InterruptCode::Serial) && self.get_ie(InterruptCode::Serial) {
                 self.ime = false;
                 self.set_if(InterruptCode::Serial, false);
                 //cpu.nop() x2
-                self.PUSH(self.registers.PC);
-                self.registers.PC = 0x58;
+                self.push(self.registers.pc);
+                self.registers.pc = 0x58;
                 return 5;
             } else if self.get_if(InterruptCode::Joypad) && self.get_ie(InterruptCode::Joypad) {
                 self.ime = false;
                 self.set_if(InterruptCode::Joypad, false);
                 //cpu.nop() x2
-                self.PUSH(self.registers.PC);
-                self.registers.PC = 0x60;
+                self.push(self.registers.pc);
+                self.registers.pc = 0x60;
                 return 5;
             }
         }
