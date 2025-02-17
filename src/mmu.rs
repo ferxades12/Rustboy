@@ -35,6 +35,10 @@ impl MMU {
             self.memory[address as usize] = 0;
             return;
         }
+
+        if address < VRAM as u16 {
+            return;
+        }
         self.memory[address as usize] = value;
     }
 
