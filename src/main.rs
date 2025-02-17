@@ -5,8 +5,8 @@ use crate::cpu::CPU;
 mod cpu;
 mod mmu;
 mod op_codes;
-
-const CYCLES_PER_FRAME: u32 = 70224;
+// T-cycles = Clock cycles. 1 M-cycle = 4 T-cycles
+const CYCLES_PER_FRAME: u32 = 70224 / 4; // M-cycles.
 const FRAME_TIME: Duration = Duration::from_micros((1_000_000.0 / 59.7) as u64);
 const ROM_PATH: &str = r"rom\test\instr_timing\instr_timing.gb";
 

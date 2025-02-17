@@ -71,4 +71,12 @@ enum GPUControlRegisters {
     */
 }
 
-//const DOT; // 2^22 Hz
+/*PPU MODES
+MODE 2: OAM scan. Search for objects that overlap this line. 80 dots. VRAM accesible
+MODE 3: VRAM scan. Sends pixels to the LCD. 172-289 dots. VRAM and OAM are inaccessible
+MODE 0: HBlank. Waits until de end of the scanline. 204 dots.
+
+MODE 1: VBlank. Waits until the next frame. 4560 dots. VRAM and OAM are accessible
+*/
+
+const DOT: u16 = 4; // 4 dots per M-cycle

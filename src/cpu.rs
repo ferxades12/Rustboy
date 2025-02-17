@@ -1,7 +1,7 @@
 use crate::mmu::MMU;
 use crate::op_codes::execute_opcode;
 
-const DIV_INCREMENT_RATE: u32 = 256; // 16384 Hz
+const DIV_INCREMENT_RATE: u32 = 256 / 4; // M-cycles
 
 pub struct Registers {
     pub A: u8,
@@ -85,10 +85,10 @@ impl CPU {
 
     pub fn get_tac_frequency(&self) -> u32 {
         match self.mmu.read_byte(ControlRegisters::TAC as u16) & 0b11 {
-            0b00 => 1024,
-            0b01 => 16,
-            0b10 => 64,
-            0b11 => 256,
+            0b00 => 256, // M-cycles
+            0b01 => 4,
+            0b10 => 16,
+            0b11 => 64,
             _ => {
                 panic!("Invalid TAC frecuency");
             }
