@@ -69,6 +69,13 @@ enum GPUControlRegisters {
     Assigns gray shades to the color indexes of the OBJs that use the corresponding palette.
     Works like BGP but the lower two bits are ignored because color 0 is always transparent.
     */
+    DMA = 0xFF46,
+    /*
+    DMA Transfer and Start Address
+    Writing to this register launches a DMA transfer from ROM or RAM to OAM
+    The transfer takes 160 M-Cycles, 640 dots
+    The source address is specified by the written value * 100h.
+    */
 }
 
 /*PPU MODES
@@ -79,4 +86,44 @@ MODE 0: HBlank. Waits until de end of the scanline. 204 dots.
 MODE 1: VBlank. Waits until the next frame. 4560 dots. VRAM and OAM are accessible
 */
 
+const SCANLINES_PER_FRAME: u16 = 154;
+const DOTS_PER_SCANLINE: u16 = 456;
 const DOT: u16 = 4; // 4 dots per M-cycle
+
+const TILE_MAP_1: usize = 0x9800; // Tile Map 1 (32x32 tiles) 0x9800-0x9BFF
+const TILE_MAP_2: usize = 0x9C00; // Tile Map 2 (32x32 tiles) 0x9C00-0x9FFF
+const TILE_MAP_LENTH: u16 = 1024; // 1024 bytes
+
+const OAM: usize = 0xFE00; // Object (Sprites) 0xFE00-0xFE9F
+const OAM_LENGTH: u16 = 160; // 160 bytes
+                             /*
+                             byte 0: Y position
+                             byte 1: X position
+                             byte 2: Tile index
+                                 In 8×8 mode specifies the object’s only tile index ($00-$FF).
+                                 This unsigned value selects a tile from the memory area at $8000-$8FFF
+
+                                 In 8×16 mode the memory area at $8000-$8FFF is still interpreted as a series of 8×8 tiles,
+                                 where every 2 tiles form an object.
+                                 In this mode, this byte specifies the index of the first (top) tile of the object.
+                                 the least significant bit of the tile index is ignored
+
+                             byte 3: Flags
+                                 bit 7: Priority
+                                     0: OBJ above BG
+                                     1: OBJ behind BG
+                                 bit 6: Y flip
+                                 bit 5: X flip
+                                 bit 4: Palette number
+                                     0: OBJ Palette 0
+                                     1: OBJ Palette 1
+                                 bit 3-0: not used
+                             */
+
+struct Screen {
+    pixels: [u8; 160 * 144],
+}
+
+struct Tile {
+    pixels: [u8; 8 * 8],
+}
