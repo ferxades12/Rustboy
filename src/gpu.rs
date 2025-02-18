@@ -1,3 +1,5 @@
+use crate::mmu::MMU;
+
 enum GPUControlRegisters {
     LCDC = 0xFF40,
     /*
@@ -78,14 +80,6 @@ enum GPUControlRegisters {
     */
 }
 
-/*PPU MODES
-MODE 2: OAM scan. Search for objects that overlap this line. 80 dots. VRAM accesible
-MODE 3: VRAM scan. Sends pixels to the LCD. 172-289 dots. VRAM and OAM are inaccessible
-MODE 0: HBlank. Waits until de end of the scanline. 204 dots.
-
-MODE 1: VBlank. Waits until the next frame. 4560 dots. VRAM and OAM are accessible
-*/
-
 const SCANLINES_PER_FRAME: u16 = 154;
 const DOTS_PER_SCANLINE: u16 = 456;
 const DOT: u16 = 4; // 4 dots per M-cycle
@@ -95,35 +89,111 @@ const TILE_MAP_2: usize = 0x9C00; // Tile Map 2 (32x32 tiles) 0x9C00-0x9FFF
 const TILE_MAP_LENTH: u16 = 1024; // 1024 bytes
 
 const OAM: usize = 0xFE00; // Object (Sprites) 0xFE00-0xFE9F
-const OAM_LENGTH: u16 = 160; // 160 bytes
-                             /*
-                             byte 0: Y position
-                             byte 1: X position
-                             byte 2: Tile index
-                                 In 8×8 mode specifies the object’s only tile index ($00-$FF).
-                                 This unsigned value selects a tile from the memory area at $8000-$8FFF
+const OAM_END: usize = 0xFE9F; // 4 x 40 bytes
 
-                                 In 8×16 mode the memory area at $8000-$8FFF is still interpreted as a series of 8×8 tiles,
-                                 where every 2 tiles form an object.
-                                 In this mode, this byte specifies the index of the first (top) tile of the object.
-                                 the least significant bit of the tile index is ignored
+struct oam_object {
+    y: u8, // byte 0: Y position
+    x: u8, // byte 1: X position
+    tile_index: u8,
+    /*
+       byte 2: Tile index
+       In 8×8 mode specifies the object’s only tile index ($00-$FF).
+       This unsigned value selects a tile from the memory area at $8000-$8FFF
 
-                             byte 3: Flags
-                                 bit 7: Priority
-                                     0: OBJ above BG
-                                     1: OBJ behind BG
-                                 bit 6: Y flip
-                                 bit 5: X flip
-                                 bit 4: Palette number
-                                     0: OBJ Palette 0
-                                     1: OBJ Palette 1
-                                 bit 3-0: not used
-                             */
+       In 8×16 mode the memory area at $8000-$8FFF is still interpreted as a series of 8×8 tiles,
+       where every 2 tiles form an object.
+       In this mode, this byte specifies the index of the first (top) tile of the object.
+       the least significant bit of the tile index is ignored
+    */
+    flags: u8,
+    /*
+    byte 3: Flags
+        bit 7: Priority
+            0: OBJ above BG
+            1: OBJ behind BG
+        bit 6: Y flip
+        bit 5: X flip
+        bit 4: Palette number
+            0: OBJ Palette 0
+            1: OBJ Palette 1
+        bit 3-0: not used
+    */
+}
+
+impl oam_object {
+    fn new(address: u16, mmu: &MMU) -> Self {
+        oam_object {
+            y: mmu.read_byte(address),
+            x: mmu.read_byte(address + 1),
+            tile_index: mmu.read_byte(address + 2),
+            flags: mmu.read_byte(address + 3),
+        }
+    }
+}
 
 struct Screen {
     pixels: [u8; 160 * 144],
+    ppu_mode: u8,
+    dots_elapsed: u16,
+    mmu: MMU,
+    obj_list: Vec<oam_object>,
 }
 
 struct Tile {
     pixels: [u8; 8 * 8],
+}
+
+impl Screen {
+    fn new(mmu: MMU) -> Self {
+        Screen {
+            pixels: [0; 160 * 144],
+            ppu_mode: 0,
+            dots_elapsed: 0,
+            mmu: mmu,
+            obj_list: Vec::new(),
+        }
+    }
+
+    fn step(&mut self) {
+        let ly = self.mmu.read_byte(GPUControlRegisters::LY as u16);
+
+        match self.ppu_mode {
+            2 => {
+                //OAM scan. Search for objects that overlap this line. 80 dots. VRAM accesible
+                self.mmu.oam_enable = false;
+                self.mmu.vram_enable = true;
+
+                self.obj_list = Vec::new();
+                for i in (OAM as u16..=OAM_END as u16).step_by(4) {
+                    if self.obj_list.len() == 10 {
+                        break;
+                    }
+                    if self.mmu.read_byte(i) == ly {
+                        self.obj_list.push(oam_object::new(i, &self.mmu));
+                    }
+                }
+
+                self.ppu_mode = 3;
+                self.dots_elapsed += 80;
+            }
+            0 => {
+                //HBlank. Waits until de end of the scanline. 204 dots.
+                self.mmu.oam_enable = true;
+                self.mmu.vram_enable = true;
+            }
+            3 => {
+                //VRAM scan. Sends pixels to the LCD. 172-289 dots. VRAM and OAM are inaccessible
+                self.mmu.oam_enable = false;
+                self.mmu.vram_enable = false;
+            }
+            1 => {
+                //VBlank. Waits until the next frame. 4560 dots. VRAM and OAM are accessible
+                self.mmu.oam_enable = true;
+                self.mmu.vram_enable = true;
+            }
+            _ => {
+                panic!("Invalid PPU mode")
+            }
+        }
+    }
 }
