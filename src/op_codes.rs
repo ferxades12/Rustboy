@@ -1,19 +1,19 @@
-use crate::CPU;
+use crate::{mmu::MMU, CPU};
 
-pub fn execute_opcode(cpu: &mut CPU) -> u8 {
-    let opcode = cpu.fetch_byte();
+pub fn execute_opcode(cpu: &mut CPU, mmu: &mut MMU) -> u8 {
+    let opcode = cpu.fetch_byte(mmu);
     //println!("opcode: {:02X}", opcode);
     match opcode {
         0x00 => 1,
         0x01 => {
             // LD BC, u16
-            let value = cpu.fetch_word();
+            let value = cpu.fetch_word(mmu);
             cpu.set_bc(value);
             3
         }
         0x02 => {
             // LD (BC), A
-            cpu.mmu.write_byte(cpu.get_bc(), cpu.registers.a);
+            mmu.write_byte(cpu.get_bc(), cpu.registers.a);
             2
         }
         0x03 => {
@@ -34,7 +34,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x06 => {
             // LD B, u8
-            let value = cpu.fetch_byte();
+            let value = cpu.fetch_byte(mmu);
             cpu.registers.b = value;
             2
         }
@@ -45,8 +45,8 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x08 => {
             // LD (u16), sp
-            let word = cpu.fetch_word();
-            cpu.mmu.write_word(word, cpu.registers.sp);
+            let word = cpu.fetch_word(mmu);
+            mmu.write_word(word, cpu.registers.sp);
             5
         }
         0x09 => {
@@ -57,7 +57,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x0A => {
             // LD A, (BC)
-            cpu.registers.a = cpu.mmu.read_byte(cpu.get_bc());
+            cpu.registers.a = mmu.read_byte(cpu.get_bc());
             2
         }
         0x0B => {
@@ -78,7 +78,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x0E => {
             // LD C, u8
-            let value = cpu.fetch_byte();
+            let value = cpu.fetch_byte(mmu);
             cpu.registers.c = value;
             2
         }
@@ -94,13 +94,13 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x11 => {
             // LD DE, u16
-            let value = cpu.fetch_word();
+            let value = cpu.fetch_word(mmu);
             cpu.set_de(value);
             3
         }
         0x12 => {
             // LD (DE), A
-            cpu.mmu.write_byte(cpu.get_de(), cpu.registers.a);
+            mmu.write_byte(cpu.get_de(), cpu.registers.a);
             2
         }
         0x13 => {
@@ -121,7 +121,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x16 => {
             // LD D, u8
-            let value = cpu.fetch_byte();
+            let value = cpu.fetch_byte(mmu);
             cpu.registers.d = value;
             2
         }
@@ -132,7 +132,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x18 => {
             // jr i8
-            cpu.jr(true);
+            cpu.jr(true, mmu);
             3
         }
         0x19 => {
@@ -143,7 +143,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x1A => {
             // LD A, (DE)
-            cpu.registers.a = cpu.mmu.read_byte(cpu.get_de());
+            cpu.registers.a = mmu.read_byte(cpu.get_de());
             2
         }
         0x1B => {
@@ -164,7 +164,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x1E => {
             // LD E, u8
-            let value = cpu.fetch_byte();
+            let value = cpu.fetch_byte(mmu);
             cpu.registers.e = value;
             2
         }
@@ -176,7 +176,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         0x20 => {
             // jr NZ, i8
             let cond = !cpu.get_zf();
-            cpu.jr(cond);
+            cpu.jr(cond, mmu);
             if cond {
                 3
             } else {
@@ -185,14 +185,14 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x21 => {
             // LD HL, u16
-            let value = cpu.fetch_word();
+            let value = cpu.fetch_word(mmu);
             cpu.set_hl(value);
             3
         }
         0x22 => {
             // LD (HL+), A
             let hl = cpu.get_hl();
-            cpu.mmu.write_byte(hl, cpu.registers.a);
+            mmu.write_byte(hl, cpu.registers.a);
             cpu.set_hl(hl.wrapping_add(1));
             2
         }
@@ -214,7 +214,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x26 => {
             // LD h, u8
-            let value = cpu.fetch_byte();
+            let value = cpu.fetch_byte(mmu);
             cpu.registers.h = value;
             2
         }
@@ -226,7 +226,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         0x28 => {
             // jr Z, i8
             let cond = cpu.get_zf();
-            cpu.jr(cond);
+            cpu.jr(cond, mmu);
             if cond {
                 3
             } else {
@@ -242,7 +242,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         0x2A => {
             // LD A, (HL+)
             let hl = cpu.get_hl();
-            cpu.registers.a = cpu.mmu.read_byte(hl);
+            cpu.registers.a = mmu.read_byte(hl);
             cpu.set_hl(hl.wrapping_add(1));
             2
         }
@@ -264,7 +264,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x2E => {
             // LD l, u8
-            let value = cpu.fetch_byte();
+            let value = cpu.fetch_byte(mmu);
             cpu.registers.l = value;
             2
         }
@@ -276,7 +276,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         0x30 => {
             // jr NC, i8
             let cond = !cpu.get_cf();
-            cpu.jr(cond);
+            cpu.jr(cond, mmu);
             if cond {
                 3
             } else {
@@ -285,14 +285,14 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x31 => {
             // LD sp, u16
-            let value = cpu.fetch_word();
+            let value = cpu.fetch_word(mmu);
             cpu.registers.sp = value;
             3
         }
         0x32 => {
             // LD (HL-), A
             let hl = cpu.get_hl();
-            cpu.mmu.write_byte(hl, cpu.registers.a);
+            mmu.write_byte(hl, cpu.registers.a);
             cpu.set_hl(hl.wrapping_sub(1));
             2
         }
@@ -304,22 +304,22 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x34 => {
             // inc (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.inc(value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             3
         }
         0x35 => {
             // dec (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.dec(value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             3
         }
         0x36 => {
             // LD (HL), u8
-            let value = cpu.fetch_byte();
-            cpu.mmu.write_byte(cpu.get_hl(), value);
+            let value = cpu.fetch_byte(mmu);
+            mmu.write_byte(cpu.get_hl(), value);
             3
         }
         0x37 => {
@@ -330,7 +330,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         0x38 => {
             // jr C, i8
             let cond = cpu.get_cf();
-            cpu.jr(cond);
+            cpu.jr(cond, mmu);
 
             if cond {
                 3
@@ -349,7 +349,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         0x3A => {
             // LD A, (HL-)
             let hl = cpu.get_hl();
-            cpu.registers.a = cpu.mmu.read_byte(hl);
+            cpu.registers.a = mmu.read_byte(hl);
             cpu.set_hl(hl.wrapping_sub(1));
             2
         }
@@ -371,7 +371,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x3E => {
             // LD A, u8
-            let value = cpu.fetch_byte();
+            let value = cpu.fetch_byte(mmu);
             cpu.registers.a = value;
             2
         }
@@ -412,7 +412,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x46 => {
             // LD B, (HL)
-            cpu.registers.b = cpu.mmu.read_byte(cpu.get_hl());
+            cpu.registers.b = mmu.read_byte(cpu.get_hl());
             2
         }
         0x47 => {
@@ -452,7 +452,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x4E => {
             // LD C, (HL)
-            cpu.registers.c = cpu.mmu.read_byte(cpu.get_hl());
+            cpu.registers.c = mmu.read_byte(cpu.get_hl());
             2
         }
         0x4F => {
@@ -492,7 +492,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x56 => {
             // LD D, (HL)
-            cpu.registers.d = cpu.mmu.read_byte(cpu.get_hl());
+            cpu.registers.d = mmu.read_byte(cpu.get_hl());
             2
         }
         0x57 => {
@@ -532,7 +532,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x5E => {
             // LD E, (HL)
-            cpu.registers.e = cpu.mmu.read_byte(cpu.get_hl());
+            cpu.registers.e = mmu.read_byte(cpu.get_hl());
             2
         }
         0x5F => {
@@ -572,7 +572,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x66 => {
             // LD h, (HL)
-            cpu.registers.h = cpu.mmu.read_byte(cpu.get_hl());
+            cpu.registers.h = mmu.read_byte(cpu.get_hl());
             2
         }
         0x67 => {
@@ -612,7 +612,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x6E => {
             // LD l, (HL)
-            cpu.registers.l = cpu.mmu.read_byte(cpu.get_hl());
+            cpu.registers.l = mmu.read_byte(cpu.get_hl());
             2
         }
         0x6F => {
@@ -622,32 +622,32 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x70 => {
             // LD (HL), B
-            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.b);
+            mmu.write_byte(cpu.get_hl(), cpu.registers.b);
             2
         }
         0x71 => {
             // LD (HL), C
-            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.c);
+            mmu.write_byte(cpu.get_hl(), cpu.registers.c);
             2
         }
         0x72 => {
             // LD (HL), D
-            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.d);
+            mmu.write_byte(cpu.get_hl(), cpu.registers.d);
             2
         }
         0x73 => {
             // LD (HL), E
-            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.e);
+            mmu.write_byte(cpu.get_hl(), cpu.registers.e);
             2
         }
         0x74 => {
             // LD (HL), h
-            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.h);
+            mmu.write_byte(cpu.get_hl(), cpu.registers.h);
             2
         }
         0x75 => {
             // LD (HL), l
-            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.l);
+            mmu.write_byte(cpu.get_hl(), cpu.registers.l);
             2
         }
         0x76 => {
@@ -657,7 +657,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x77 => {
             // LD (HL), A
-            cpu.mmu.write_byte(cpu.get_hl(), cpu.registers.a);
+            mmu.write_byte(cpu.get_hl(), cpu.registers.a);
             2
         }
         0x78 => {
@@ -692,7 +692,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x7E => {
             // LD A, (HL)
-            cpu.registers.a = cpu.mmu.read_byte(cpu.get_hl());
+            cpu.registers.a = mmu.read_byte(cpu.get_hl());
             2
         }
         0x7F => {
@@ -732,7 +732,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x86 => {
             // ADD A, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             cpu.registers.a = cpu.add8(value);
             2
         }
@@ -773,7 +773,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x8E => {
             // adc A, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             cpu.registers.a = cpu.adc(value);
             2
         }
@@ -814,7 +814,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x96 => {
             // sub A, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             cpu.registers.a = cpu.sub(value);
             2
         }
@@ -855,7 +855,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0x9E => {
             // sbc A, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             cpu.registers.a = cpu.sbc(value);
             2
         }
@@ -896,7 +896,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xA6 => {
             // and A, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             cpu.and(value);
             2
         }
@@ -937,7 +937,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xAE => {
             // xor A, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             cpu.xor(value);
             2
         }
@@ -978,7 +978,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xB6 => {
             // or A, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             cpu.or(value);
             2
         }
@@ -1019,7 +1019,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xBE => {
             // cp A, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             cpu.cp(value);
             2
         }
@@ -1031,7 +1031,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         0xC0 => {
             // ret NZ
             let cond = !cpu.get_zf();
-            cpu.ret(cond);
+            cpu.ret(cond, mmu);
 
             if cond {
                 5
@@ -1041,14 +1041,14 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xC1 => {
             // pop BC
-            let value = cpu.pop();
+            let value = cpu.pop(mmu);
             cpu.set_bc(value);
             3
         }
         0xC2 => {
             // jp NZ, u16
             let cond = !cpu.get_zf();
-            cpu.jp(cond);
+            cpu.jp(cond, mmu);
             if cond {
                 4
             } else {
@@ -1057,13 +1057,13 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xC3 => {
             // jp u16
-            cpu.jp(true);
+            cpu.jp(true, mmu);
             4
         }
         0xC4 => {
             // call NZ, u16
             let cond = !cpu.get_zf();
-            cpu.call(cond);
+            cpu.call(cond, mmu);
             if cond {
                 6
             } else {
@@ -1072,24 +1072,24 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xC5 => {
             // push BC
-            cpu.push(cpu.get_bc());
+            cpu.push(cpu.get_bc(), mmu);
             4
         }
         0xC6 => {
             // ADD A, u8
-            let value = cpu.fetch_byte();
+            let value = cpu.fetch_byte(mmu);
             cpu.registers.a = cpu.add8(value);
             2
         }
         0xC7 => {
             // rst 00H
-            cpu.rst(0x00);
+            cpu.rst(0x00, mmu);
             4
         }
         0xC8 => {
             // ret Z
             let cond = cpu.get_zf();
-            cpu.ret(cond);
+            cpu.ret(cond, mmu);
             if cond {
                 5
             } else {
@@ -1098,13 +1098,13 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xC9 => {
             // ret
-            cpu.ret(true);
+            cpu.ret(true, mmu);
             4
         }
         0xCA => {
             // jp Z, u16
             let cond = cpu.get_zf();
-            cpu.jp(cond);
+            cpu.jp(cond, mmu);
             if cond {
                 4
             } else {
@@ -1113,12 +1113,12 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xCB => {
             // PREFIX CB
-            execute_cb_opcode(cpu)
+            execute_cb_opcode(cpu, mmu)
         }
         0xCC => {
             // call Z, u16
             let cond = cpu.get_zf();
-            cpu.call(cond);
+            cpu.call(cond, mmu);
             if cond {
                 6
             } else {
@@ -1127,24 +1127,24 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xCD => {
             // call u16
-            cpu.call(true);
+            cpu.call(true, mmu);
             6
         }
         0xCE => {
             // adc A, u8
-            let value = cpu.fetch_byte();
+            let value = cpu.fetch_byte(mmu);
             cpu.registers.a = cpu.adc(value);
             2
         }
         0xCF => {
             // rst 08H
-            cpu.rst(0x08);
+            cpu.rst(0x08, mmu);
             4
         }
         0xD0 => {
             // ret NC
             let cond = !cpu.get_cf();
-            cpu.ret(cond);
+            cpu.ret(cond, mmu);
             if cond {
                 5
             } else {
@@ -1153,14 +1153,14 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xD1 => {
             // pop DE
-            let value = cpu.pop();
+            let value = cpu.pop(mmu);
             cpu.set_de(value);
             3
         }
         0xD2 => {
             // jp NC, u16
             let cond = !cpu.get_cf();
-            cpu.jp(cond);
+            cpu.jp(cond, mmu);
             if cond {
                 4
             } else {
@@ -1170,7 +1170,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         0xD4 => {
             // call NC, u16
             let cond = !cpu.get_cf();
-            cpu.call(cond);
+            cpu.call(cond, mmu);
             if cond {
                 6
             } else {
@@ -1179,24 +1179,24 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xD5 => {
             // push DE
-            cpu.push(cpu.get_de());
+            cpu.push(cpu.get_de(), mmu);
             4
         }
         0xD6 => {
             // sub A, u8
-            let value = cpu.fetch_byte();
+            let value = cpu.fetch_byte(mmu);
             cpu.registers.a = cpu.sub(value);
             2
         }
         0xD7 => {
             // rst 10H
-            cpu.rst(0x10);
+            cpu.rst(0x10, mmu);
             4
         }
         0xD8 => {
             // ret C
             let cond = cpu.get_cf();
-            cpu.ret(cond);
+            cpu.ret(cond, mmu);
             if cond {
                 5
             } else {
@@ -1205,14 +1205,14 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xD9 => {
             // RETI
-            cpu.ret(true);
+            cpu.ret(true, mmu);
             cpu.ei_flag = true;
             4
         }
         0xDA => {
             // jp C, u16
             let cond = cpu.get_cf();
-            cpu.jp(cond);
+            cpu.jp(cond, mmu);
             if cond {
                 4
             } else {
@@ -1222,7 +1222,7 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         0xDC => {
             // call C, u16
             let cond = cpu.get_cf();
-            cpu.call(cond);
+            cpu.call(cond, mmu);
             if cond {
                 6
             } else {
@@ -1231,52 +1231,51 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xDE => {
             // sbc A, u8
-            let value = cpu.fetch_byte();
+            let value = cpu.fetch_byte(mmu);
             cpu.registers.a = cpu.sbc(value);
             2
         }
         0xDF => {
             // rst 18H
-            cpu.rst(0x18);
+            cpu.rst(0x18, mmu);
             4
         }
         0xE0 => {
             // LD (FF00 + u8), A
-            let value = cpu.fetch_byte();
-            cpu.mmu.write_byte(0xFF00 + value as u16, cpu.registers.a);
+            let value = cpu.fetch_byte(mmu);
+            mmu.write_byte(0xFF00 + value as u16, cpu.registers.a);
             3
         }
         0xE1 => {
             // pop HL
-            let value = cpu.pop();
+            let value = cpu.pop(mmu);
             cpu.set_hl(value);
             3
         }
         0xE2 => {
             // LD (FF00 + C), A
-            cpu.mmu
-                .write_byte(0xFF00 + cpu.registers.c as u16, cpu.registers.a);
+            mmu.write_byte(0xFF00 + cpu.registers.c as u16, cpu.registers.a);
             2
         }
         0xE5 => {
             // push HL
-            cpu.push(cpu.get_hl());
+            cpu.push(cpu.get_hl(), mmu);
             4
         }
         0xE6 => {
             // and A, u8
-            let value = cpu.fetch_byte();
+            let value = cpu.fetch_byte(mmu);
             cpu.and(value);
             2
         }
         0xE7 => {
             // rst 20H
-            cpu.rst(0x20);
+            cpu.rst(0x20, mmu);
             4
         }
         0xE8 => {
             // ADD sp, i8
-            let value = cpu.fetch_byte() as i8 as i16; // Convertir a i16 para la suma correcta
+            let value = cpu.fetch_byte(mmu) as i8 as i16; // Convertir a i16 para la suma correcta
             let sp = cpu.registers.sp as i16;
             let result = sp.wrapping_add(value) as u16;
 
@@ -1298,36 +1297,36 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xEA => {
             // LD (u16), A
-            let value = cpu.fetch_word();
-            cpu.mmu.write_byte(value, cpu.registers.a);
+            let value = cpu.fetch_word(mmu);
+            mmu.write_byte(value, cpu.registers.a);
             4
         }
         0xEE => {
             // xor A, u8
-            let value = cpu.fetch_byte();
+            let value = cpu.fetch_byte(mmu);
             cpu.xor(value);
             2
         }
         0xEF => {
             // rst 28H
-            cpu.rst(0x28);
+            cpu.rst(0x28, mmu);
             4
         }
         0xF0 => {
             // LD A, (FF00 + u8)
-            let value = cpu.fetch_byte();
-            cpu.registers.a = cpu.mmu.read_byte(0xFF00 + value as u16);
+            let value = cpu.fetch_byte(mmu);
+            cpu.registers.a = mmu.read_byte(0xFF00 + value as u16);
             3
         }
         0xF1 => {
             // pop AF
-            let value = cpu.pop() & 0xFFF0;
+            let value = cpu.pop(mmu) & 0xFFF0;
             cpu.set_af(value);
             3
         }
         0xF2 => {
             // LD A, (FF00 + C)
-            cpu.registers.a = cpu.mmu.read_byte(0xFF00 + cpu.registers.c as u16);
+            cpu.registers.a = mmu.read_byte(0xFF00 + cpu.registers.c as u16);
             2
         }
         0xF3 => {
@@ -1338,23 +1337,23 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xF5 => {
             // push AF
-            cpu.push(cpu.get_af());
+            cpu.push(cpu.get_af(), mmu);
             4
         }
         0xF6 => {
             // or A, u8
-            let value = cpu.fetch_byte();
+            let value = cpu.fetch_byte(mmu);
             cpu.or(value);
             2
         }
         0xF7 => {
             // rst 30H
-            cpu.rst(0x30);
+            cpu.rst(0x30, mmu);
             4
         }
         0xF8 => {
             // LD HL, sp+i8
-            let value = cpu.fetch_byte() as i8 as i16;
+            let value = cpu.fetch_byte(mmu) as i8 as i16;
             let sp = cpu.registers.sp as i16;
             let result = sp.wrapping_add(value) as u16;
 
@@ -1376,8 +1375,8 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xFA => {
             // LD A, (u16)
-            let value = cpu.fetch_word();
-            cpu.registers.a = cpu.mmu.read_byte(value);
+            let value = cpu.fetch_word(mmu);
+            cpu.registers.a = mmu.read_byte(value);
             4
         }
         0xFB => {
@@ -1387,21 +1386,21 @@ pub fn execute_opcode(cpu: &mut CPU) -> u8 {
         }
         0xFE => {
             // cp A, u8
-            let value = cpu.fetch_byte();
+            let value = cpu.fetch_byte(mmu);
             cpu.cp(value);
             2
         }
         0xFF => {
             // rst 38H
-            cpu.rst(0x38);
+            cpu.rst(0x38, mmu);
             4
         }
         _ => panic!("Unknown opcode: 0x{:X}", opcode),
     }
 }
 
-fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
-    let op_code = cpu.fetch_byte();
+fn execute_cb_opcode(cpu: &mut CPU, mmu: &mut MMU) -> u8 {
+    let op_code = cpu.fetch_byte(mmu);
     match op_code {
         0x00 => {
             // rlc B
@@ -1435,9 +1434,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x06 => {
             // rlc (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.rlc(value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x07 => {
@@ -1477,9 +1476,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x0E => {
             // rrc (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.rrc(value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x0F => {
@@ -1519,9 +1518,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x16 => {
             // rl (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.rl(value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x17 => {
@@ -1561,9 +1560,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x1E => {
             // rr (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.rr(value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x1F => {
@@ -1603,9 +1602,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x26 => {
             // sla (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.sla(value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x27 => {
@@ -1645,9 +1644,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x2E => {
             // sra (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.sra(value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x2F => {
@@ -1687,9 +1686,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x36 => {
             // swap (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.swap(value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x37 => {
@@ -1729,9 +1728,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x3E => {
             // srl (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.srl(value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x3F => {
@@ -1771,7 +1770,7 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x46 => {
             // bit 0, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             cpu.bit(0, value);
             3
         }
@@ -1812,7 +1811,7 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x4E => {
             // bit 1, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             cpu.bit(1, value);
             3
         }
@@ -1853,7 +1852,7 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x56 => {
             // bit 2, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             cpu.bit(2, value);
             3
         }
@@ -1894,7 +1893,7 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x5E => {
             // bit 3, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             cpu.bit(3, value);
             3
         }
@@ -1935,7 +1934,7 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x66 => {
             // bit 4, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             cpu.bit(4, value);
             3
         }
@@ -1976,7 +1975,7 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x6E => {
             // bit 5, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             cpu.bit(5, value);
             3
         }
@@ -2017,7 +2016,7 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x76 => {
             // bit 6, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             cpu.bit(6, value);
             3
         }
@@ -2058,7 +2057,7 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x7E => {
             // bit 7, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             cpu.bit(7, value);
             3
         }
@@ -2099,9 +2098,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x86 => {
             // res 0, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.res(0, value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x87 => {
@@ -2141,9 +2140,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x8E => {
             // res 1, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.res(1, value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x8F => {
@@ -2183,9 +2182,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x96 => {
             // res 2, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.res(2, value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x97 => {
@@ -2225,9 +2224,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0x9E => {
             // res 3, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.res(3, value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0x9F => {
@@ -2267,9 +2266,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0xA6 => {
             // res 4, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.res(4, value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xA7 => {
@@ -2309,9 +2308,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0xAE => {
             // res 5, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.res(5, value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xAF => {
@@ -2351,9 +2350,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0xB6 => {
             // res 6, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.res(6, value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xB7 => {
@@ -2393,9 +2392,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0xBE => {
             // res 7, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.res(7, value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xBF => {
@@ -2435,9 +2434,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0xC6 => {
             // set 0, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.set(0, value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xC7 => {
@@ -2477,9 +2476,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0xCE => {
             // set 1, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.set(1, value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xCF => {
@@ -2519,9 +2518,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0xD6 => {
             // set 2, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.set(2, value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xD7 => {
@@ -2561,9 +2560,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0xDE => {
             // set 3, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.set(3, value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xDF => {
@@ -2603,9 +2602,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0xE6 => {
             // set 4, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.set(4, value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xE7 => {
@@ -2645,9 +2644,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0xEE => {
             // set 5, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.set(5, value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xEF => {
@@ -2687,9 +2686,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0xF6 => {
             // set 6, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.set(6, value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xF7 => {
@@ -2729,9 +2728,9 @@ fn execute_cb_opcode(cpu: &mut CPU) -> u8 {
         }
         0xFE => {
             // set 7, (HL)
-            let value = cpu.mmu.read_byte(cpu.get_hl());
+            let value = mmu.read_byte(cpu.get_hl());
             let result = cpu.set(7, value);
-            cpu.mmu.write_byte(cpu.get_hl(), result);
+            mmu.write_byte(cpu.get_hl(), result);
             4
         }
         0xFF => {

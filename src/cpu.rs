@@ -60,7 +60,6 @@ impl Registers {
 
 pub struct CPU {
     pub registers: Registers,
-    pub mmu: MMU,
     pub ei_flag: bool,   // Flag de interrupciones
     pub stop_flag: bool, // Flag de parada
     pub halt_flag: bool,
@@ -70,10 +69,9 @@ pub struct CPU {
 }
 
 impl CPU {
-    pub fn new(mmu: MMU) -> CPU {
+    pub fn new() -> CPU {
         CPU {
             registers: Registers::new(),
-            mmu: mmu,
             ei_flag: false,
             stop_flag: false,
             halt_flag: false,
@@ -83,8 +81,8 @@ impl CPU {
         }
     }
 
-    pub fn get_tac_frequency(&self) -> u32 {
-        match self.mmu.read_byte(ControlRegisters::TAC as u16) & 0b11 {
+    pub fn get_tac_frequency(&self, mmu: &MMU) -> u32 {
+        match mmu.read_byte(ControlRegisters::TAC as u16) & 0b11 {
             0b00 => 256, // M-cycles
             0b01 => 4,
             0b10 => 16,
@@ -102,42 +100,42 @@ impl CPU {
         self.ime = value;
     }
 
-    pub fn get_tac_enabled(&self) -> bool {
-        (self.mmu.read_byte(ControlRegisters::TAC as u16) & 0b100) != 0
+    pub fn get_tac_enabled(&self, mmu: &MMU) -> bool {
+        (mmu.read_byte(ControlRegisters::TAC as u16) & 0b100) != 0
     }
 
-    pub fn get_ie(&self, code: InterruptCode) -> bool {
-        (self.mmu.read_byte(ControlRegisters::IE as u16) & (1 << code as u8)) != 0
+    pub fn get_ie(&self, code: InterruptCode, mmu: &MMU) -> bool {
+        (mmu.read_byte(ControlRegisters::IE as u16) & (1 << code as u8)) != 0
     }
 
-    pub fn get_if(&self, code: InterruptCode) -> bool {
-        (self.mmu.read_byte(ControlRegisters::IF as u16) & (1 << code as u8)) != 0
+    pub fn get_if(&self, code: InterruptCode, mmu: &MMU) -> bool {
+        (mmu.read_byte(ControlRegisters::IF as u16) & (1 << code as u8)) != 0
     }
 
-    pub fn set_ie(&mut self, code: InterruptCode, value: bool) {
+    pub fn set_ie(&mut self, code: InterruptCode, value: bool, mmu: &mut MMU) {
         if value {
-            self.mmu.write_byte(
+            mmu.write_byte(
                 ControlRegisters::IE as u16,
-                self.mmu.read_byte(ControlRegisters::IE as u16) | (1 << code as u8),
+                mmu.read_byte(ControlRegisters::IE as u16) | (1 << code as u8),
             );
         } else {
-            self.mmu.write_byte(
+            mmu.write_byte(
                 ControlRegisters::IE as u16,
-                self.mmu.read_byte(ControlRegisters::IE as u16) & !(1 << code as u8),
+                mmu.read_byte(ControlRegisters::IE as u16) & !(1 << code as u8),
             );
         }
     }
 
-    pub fn set_if(&mut self, code: InterruptCode, value: bool) {
+    pub fn set_if(&mut self, code: InterruptCode, value: bool, mmu: &mut MMU) {
         if value {
-            self.mmu.write_byte(
+            mmu.write_byte(
                 ControlRegisters::IF as u16,
-                self.mmu.read_byte(ControlRegisters::IF as u16) | (1 << code as u8),
+                mmu.read_byte(ControlRegisters::IF as u16) | (1 << code as u8),
             );
         } else {
-            self.mmu.write_byte(
+            mmu.write_byte(
                 ControlRegisters::IF as u16,
-                self.mmu.read_byte(ControlRegisters::IF as u16) & !(1 << code as u8),
+                mmu.read_byte(ControlRegisters::IF as u16) & !(1 << code as u8),
             );
         }
     }
@@ -390,27 +388,27 @@ impl CPU {
         result
     }
 
-    pub fn fetch_byte(&mut self) -> u8 {
-        let op = self.mmu.read_byte(self.registers.pc);
+    pub fn fetch_byte(&mut self, mmu: &MMU) -> u8 {
+        let op = mmu.read_byte(self.registers.pc);
         self.registers.pc += 1;
         op
     }
 
-    pub fn fetch_word(&mut self) -> u16 {
-        let op = self.mmu.read_word(self.registers.pc);
+    pub fn fetch_word(&mut self, mmu: &MMU) -> u16 {
+        let op = mmu.read_word(self.registers.pc);
         self.registers.pc += 2;
         op
     }
 
-    pub fn jr(&mut self, condition: bool) {
-        let offset: i8 = self.fetch_byte() as i8;
+    pub fn jr(&mut self, condition: bool, mmu: &MMU) {
+        let offset: i8 = self.fetch_byte(mmu) as i8;
         if condition {
             self.registers.pc = (self.registers.pc as i32 + offset as i32) as u16;
         }
     }
 
-    pub fn jp(&mut self, condition: bool) {
-        let address = self.fetch_word();
+    pub fn jp(&mut self, condition: bool, mmu: &MMU) {
+        let address = self.fetch_word(mmu);
         if condition {
             self.registers.pc = address;
         }
@@ -477,160 +475,163 @@ impl CPU {
         self.set_hf(false);
     }
 
-    pub fn pop(&mut self) -> u16 {
-        let value = self.mmu.read_word(self.registers.sp);
+    pub fn pop(&mut self, mmu: &MMU) -> u16 {
+        let value = mmu.read_word(self.registers.sp);
         self.registers.sp = self.registers.sp.wrapping_add(2);
         value
     }
 
-    pub fn push(&mut self, value: u16) {
+    pub fn push(&mut self, value: u16, mmu: &mut MMU) {
         self.registers.sp -= 2;
-        self.mmu.write_word(self.registers.sp, value);
+        mmu.write_word(self.registers.sp, value);
     }
 
-    pub fn rst(&mut self, address: u16) {
-        self.push(self.registers.pc);
+    pub fn rst(&mut self, address: u16, mmu: &mut MMU) {
+        self.push(self.registers.pc, mmu);
         self.registers.pc = address;
     }
 
-    pub fn ret(&mut self, condition: bool) {
+    pub fn ret(&mut self, condition: bool, mmu: &MMU) {
         if condition {
-            self.registers.pc = self.pop();
+            self.registers.pc = self.pop(mmu);
         }
     }
 
-    pub fn call(&mut self, condition: bool) {
-        let address = self.fetch_word();
+    pub fn call(&mut self, condition: bool, mmu: &mut MMU) {
+        let address = self.fetch_word(mmu);
 
         if condition {
-            self.push(self.registers.pc);
+            self.push(self.registers.pc, mmu);
             self.registers.pc = address;
         }
     }
 
-    pub fn increment_div_register(&mut self) {
+    pub fn increment_div_register(&mut self, mmu: &mut MMU) {
         if self.div_counter >= DIV_INCREMENT_RATE {
-            self.mmu.write_byte(
+            mmu.write_byte(
                 ControlRegisters::DIV as u16,
-                self.mmu
-                    .read_byte(ControlRegisters::DIV as u16)
-                    .wrapping_add(1),
+                mmu.read_byte(ControlRegisters::DIV as u16).wrapping_add(1),
             );
             self.div_counter -= DIV_INCREMENT_RATE; // Reset the cycle counter
         }
     }
 
-    pub fn increment_tima_register(&mut self) {
-        if self.tima_counter >= self.get_tac_frequency() && self.get_tac_enabled() {
+    pub fn increment_tima_register(&mut self, mmu: &mut MMU) {
+        if self.tima_counter >= self.get_tac_frequency(mmu) && self.get_tac_enabled(mmu) {
             // Checks overflow in TIMA and enable bit in TAC
-            self.tima_counter -= self.get_tac_frequency(); // Reset the TIMA counter
-            let (result, overflow) = self
-                .mmu
+            self.tima_counter -= self.get_tac_frequency(mmu); // Reset the TIMA counter
+            let (result, overflow) = mmu
                 .read_byte(ControlRegisters::TIMA as u16)
                 .overflowing_add(1);
 
             if overflow {
                 // Requesti interrupt and reset TIMA
-                self.set_if(InterruptCode::Timer, true);
-                self.mmu.write_byte(
+                self.set_if(InterruptCode::Timer, true, mmu);
+                mmu.write_byte(
                     ControlRegisters::TIMA as u16,
-                    self.mmu.read_byte(ControlRegisters::TMA as u16),
+                    mmu.read_byte(ControlRegisters::TMA as u16),
                 );
             } else {
                 // Increment TIMA
-                self.mmu.write_byte(ControlRegisters::TIMA as u16, result);
+                mmu.write_byte(ControlRegisters::TIMA as u16, result);
             }
         }
     }
 
-    pub fn step(&mut self) -> u32 {
+    pub fn step(&mut self, mmu: &mut MMU) -> u32 {
         let mut cycles = 0;
 
         // Handle HALT
         if self.halt_flag {
             loop {
                 // Still running div and tima registers
-                self.increment_div_register();
-                self.increment_tima_register();
+                self.increment_div_register(mmu);
+                self.increment_tima_register(mmu);
 
                 // Exit on interrupt
-                if (self.mmu.read_byte(ControlRegisters::IF as u16)
-                    & self.mmu.read_byte(ControlRegisters::IE as u16))
+                if (mmu.read_byte(ControlRegisters::IF as u16)
+                    & mmu.read_byte(ControlRegisters::IE as u16))
                     != 0
                 {
                     self.halt_flag = false;
-                    self.handle_interrupts();
+                    self.handle_interrupts(mmu);
                     break;
                 }
             }
         } else {
-            cycles += execute_opcode(self) as u32;
+            cycles += execute_opcode(self, mmu) as u32;
         }
 
         self.tima_counter = self.tima_counter.wrapping_add(cycles);
         self.div_counter = self.div_counter.wrapping_add(cycles);
 
         // Increment the DIV register
-        self.increment_div_register();
+        self.increment_div_register(mmu);
 
         // Increment the TIMA register
-        self.increment_tima_register();
+        self.increment_tima_register(mmu);
 
         // Handle interrupts
-        let cycles2 = self.handle_interrupts();
+        let cycles2 = self.handle_interrupts(mmu);
 
         self.tima_counter = self.tima_counter.wrapping_add(cycles2);
         self.div_counter = self.div_counter.wrapping_add(cycles2);
 
         // Increment the DIV register
-        self.increment_div_register();
+        self.increment_div_register(mmu);
 
         // Increment the TIMA register
-        self.increment_tima_register();
+        self.increment_tima_register(mmu);
 
         cycles + cycles2
     }
 
-    fn handle_interrupts(&mut self) -> u32 {
+    fn handle_interrupts(&mut self, mmu: &mut MMU) -> u32 {
         if self.ei_flag {
             self.ei_flag = false;
             self.ime = true;
         }
 
         if self.ime {
-            if self.get_if(InterruptCode::Vblank) && self.get_ie(InterruptCode::Vblank) {
+            if self.get_if(InterruptCode::Vblank, mmu) && self.get_ie(InterruptCode::Vblank, mmu) {
                 // Check both IME and IF
                 self.ime = false;
-                self.set_if(InterruptCode::Vblank, false); // Unset IME and IF
-                self.push(self.registers.pc); // Push the current program counter onto the stack
+                self.set_if(InterruptCode::Vblank, false, mmu); // Unset IME and IF
+                self.push(self.registers.pc, mmu); // Push the current program counter onto the stack
                 self.registers.pc = 0x40; // Jump to the interrupt handler
                 return 5;
-            } else if self.get_if(InterruptCode::Lcd) && self.get_ie(InterruptCode::Lcd) {
+            } else if self.get_if(InterruptCode::Lcd, mmu) && self.get_ie(InterruptCode::Lcd, mmu) {
                 self.ime = false;
-                self.set_if(InterruptCode::Lcd, false);
+                self.set_if(InterruptCode::Lcd, false, mmu);
                 //cpu.nop() x2
-                self.push(self.registers.pc);
+                self.push(self.registers.pc, mmu);
                 self.registers.pc = 0x48;
                 return 5;
-            } else if self.get_if(InterruptCode::Timer) && self.get_ie(InterruptCode::Timer) {
+            } else if self.get_if(InterruptCode::Timer, mmu)
+                && self.get_ie(InterruptCode::Timer, mmu)
+            {
                 self.ime = false;
-                self.set_if(InterruptCode::Timer, false);
+                self.set_if(InterruptCode::Timer, false, mmu);
                 //cpu.nop() x2
-                self.push(self.registers.pc);
+                self.push(self.registers.pc, mmu);
                 self.registers.pc = 0x50;
                 return 5;
-            } else if self.get_if(InterruptCode::Serial) && self.get_ie(InterruptCode::Serial) {
+            } else if self.get_if(InterruptCode::Serial, mmu)
+                && self.get_ie(InterruptCode::Serial, mmu)
+            {
                 self.ime = false;
-                self.set_if(InterruptCode::Serial, false);
+                self.set_if(InterruptCode::Serial, false, mmu);
                 //cpu.nop() x2
-                self.push(self.registers.pc);
+                self.push(self.registers.pc, mmu);
                 self.registers.pc = 0x58;
                 return 5;
-            } else if self.get_if(InterruptCode::Joypad) && self.get_ie(InterruptCode::Joypad) {
+            } else if self.get_if(InterruptCode::Joypad, mmu)
+                && self.get_ie(InterruptCode::Joypad, mmu)
+            {
                 self.ime = false;
-                self.set_if(InterruptCode::Joypad, false);
+                self.set_if(InterruptCode::Joypad, false, mmu);
                 //cpu.nop() x2
-                self.push(self.registers.pc);
+                self.push(self.registers.pc, mmu);
                 self.registers.pc = 0x60;
                 return 5;
             }

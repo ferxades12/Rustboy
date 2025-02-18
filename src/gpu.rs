@@ -135,7 +135,6 @@ struct Screen {
     pixels: [u8; 160 * 144],
     ppu_mode: u8,
     dots_elapsed: u16,
-    mmu: MMU,
     obj_list: Vec<oam_object>,
 }
 
@@ -149,27 +148,26 @@ impl Screen {
             pixels: [0; 160 * 144],
             ppu_mode: 0,
             dots_elapsed: 0,
-            mmu: mmu,
             obj_list: Vec::new(),
         }
     }
 
-    fn step(&mut self) {
-        let ly = self.mmu.read_byte(GPUControlRegisters::LY as u16);
+    fn step(&mut self, mmu: &mut MMU) {
+        let ly = mmu.read_byte(GPUControlRegisters::LY as u16);
 
         match self.ppu_mode {
             2 => {
                 //OAM scan. Search for objects that overlap this line. 80 dots. VRAM accesible
-                self.mmu.oam_enable = false;
-                self.mmu.vram_enable = true;
+                mmu.oam_enable = false;
+                mmu.vram_enable = true;
 
                 self.obj_list = Vec::new();
                 for i in (OAM as u16..=OAM_END as u16).step_by(4) {
                     if self.obj_list.len() == 10 {
                         break;
                     }
-                    if self.mmu.read_byte(i) == ly {
-                        self.obj_list.push(oam_object::new(i, &self.mmu));
+                    if mmu.read_byte(i) == ly {
+                        self.obj_list.push(oam_object::new(i, &mmu));
                     }
                 }
 
@@ -178,18 +176,18 @@ impl Screen {
             }
             0 => {
                 //HBlank. Waits until de end of the scanline. 204 dots.
-                self.mmu.oam_enable = true;
-                self.mmu.vram_enable = true;
+                mmu.oam_enable = true;
+                mmu.vram_enable = true;
             }
             3 => {
                 //VRAM scan. Sends pixels to the LCD. 172-289 dots. VRAM and OAM are inaccessible
-                self.mmu.oam_enable = false;
-                self.mmu.vram_enable = false;
+                mmu.oam_enable = false;
+                mmu.vram_enable = false;
             }
             1 => {
                 //VBlank. Waits until the next frame. 4560 dots. VRAM and OAM are accessible
-                self.mmu.oam_enable = true;
-                self.mmu.vram_enable = true;
+                mmu.oam_enable = true;
+                mmu.vram_enable = true;
             }
             _ => {
                 panic!("Invalid PPU mode")
