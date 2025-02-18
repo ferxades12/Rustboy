@@ -70,10 +70,10 @@ pub struct CPU {
 }
 
 impl CPU {
-    pub fn new() -> CPU {
+    pub fn new(mmu: MMU) -> CPU {
         CPU {
             registers: Registers::new(),
-            mmu: MMU::new(),
+            mmu: mmu,
             ei_flag: false,
             stop_flag: false,
             halt_flag: false,

@@ -4,22 +4,28 @@ const MEMORY_SIZE: usize = 65536;
 const ROM_BANK_0: usize = 0x0000; // ROM Bank 0 (32KB) HOME BANK
 const ROM_BANK_1: usize = 0x4000; // ROM Bank 1 (32KB)
 const VRAM: usize = 0x8000; // VRAM (8KB). $8000-$97FF
+const VRAM_LENGTH: u16 = 8192;
 const CARTRIDGE_RAM: usize = 0xA000;
 const WORK_RAM: usize = 0xC000; // RAM Bank 0 (8KB)
                                 // Space not used
 const OAM: usize = 0xFE00; // OAM (Sprites) (160 bytes) also tiles
-                           //Space not used
+const OAM_LENGTH: u16 = 160;
+//Space not used
 const IO_REGISTERS: usize = 0xFF00; // IO Registros (80 bytes)
 const HIGH_RAM: usize = 0xFF80; // Memoria de alto rendimiento (128 bytes) //Acceso un ciclo mas rapido
 
 pub struct MMU {
     pub memory: [u8; MEMORY_SIZE], // Memoria de la CPU
+    pub oam_enable: bool,
+    pub vram_enable: bool,
 }
 
 impl MMU {
     pub fn new() -> Self {
         MMU {
             memory: [0; MEMORY_SIZE],
+            oam_enable: true,
+            vram_enable: true,
         }
     }
 
@@ -41,6 +47,16 @@ impl MMU {
 
         // ROM BANK 0
         if address < VRAM as u16 {
+            return;
+        }
+
+        // OAM disabled in modes 2 and 3
+        if (OAM as u16..OAM as u16 + OAM_LENGTH as u16).contains(&address) && !self.oam_enable {
+            return;
+        }
+
+        // VRAM disabled in mode 3
+        if (VRAM as u16..VRAM as u16 + VRAM_LENGTH).contains(&address) && !self.vram_enable {
             return;
         }
 
