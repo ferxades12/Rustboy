@@ -1,4 +1,7 @@
-use crate::mmu::MMU;
+use crate::{
+    cpu::Registers,
+    mmu::{self, MMU},
+};
 
 enum GPUControlRegisters {
     LCDC = 0xFF40,
@@ -84,20 +87,25 @@ const SCANLINES_PER_FRAME: u16 = 154;
 const DOTS_PER_SCANLINE: u16 = 456;
 const DOT: u16 = 4; // 4 dots per M-cycle
 
-const TILE_MAP_1: usize = 0x9800; // Tile Map 1 (32x32 tiles) 0x9800-0x9BFF
-const TILE_MAP_2: usize = 0x9C00; // Tile Map 2 (32x32 tiles) 0x9C00-0x9FFF
+enum TileMap {
+    TILE_MAP_1 = 0x9800, // Tile Map 1 (32x32 tiles) 0x9800-0x9BFF
+    TILE_MAP_2 = 0x9C00, // Tile Map 2 (32x32 tiles) 0x9C00-0x9FFF
+}
 const TILE_MAP_LENTH: u16 = 1024; // 1024 bytes
 
 const OAM: usize = 0xFE00; // Object (Sprites) 0xFE00-0xFE9F
 const OAM_END: usize = 0xFE9F; // 4 x 40 bytes
 
-struct oam_object {
-    y: u8, // byte 0: Y position
-    x: u8, // byte 1: X position
+const WIDTH: usize = 160;
+const HEIGHT: usize = 144;
+
+pub struct OamObject {
+    y: u8, // byte 0: Y position + 16
+    x: u8, // byte 1: X position + 8
     tile_index: u8,
     /*
        byte 2: Tile index
-       In 8×8 mode specifies the object’s only tile index ($00-$FF).
+       In 8×8 mode specifies the object’s only tile index ($00-$FF). (Es el ordinal de la tile)
        This unsigned value selects a tile from the memory area at $8000-$8FFF
 
        In 8×16 mode the memory area at $8000-$8FFF is still interpreted as a series of 8×8 tiles,
@@ -120,39 +128,49 @@ struct oam_object {
     */
 }
 
-impl oam_object {
+impl OamObject {
     fn new(address: u16, mmu: &MMU) -> Self {
-        oam_object {
-            y: mmu.read_byte(address),
-            x: mmu.read_byte(address + 1),
+        OamObject {
+            y: mmu.read_byte(address) - 16,
+            x: mmu.read_byte(address + 1) - 8,
             tile_index: mmu.read_byte(address + 2),
             flags: mmu.read_byte(address + 3),
         }
     }
 }
 
-struct Screen {
-    pixels: [u8; 160 * 144],
-    ppu_mode: u8,
-    dots_elapsed: u16,
-    obj_list: Vec<oam_object>,
-}
-
 struct Tile {
     pixels: [u8; 8 * 8],
 }
 
+struct Pixel {
+    Color: u8,
+    Palette: Option<bool>,
+    Bg_priority: bool,
+}
+
+pub struct Screen {
+    pub pixels: [u8; WIDTH * HEIGHT],
+    pub ppu_mode: u8,
+    pub obj_list: Vec<OamObject>,
+    tile_map: TileMap,
+    fifo_obj: Vec<Pixel>,
+    fifo_bg: Vec<Pixel>,
+}
+
 impl Screen {
-    fn new(mmu: MMU) -> Self {
+    pub fn new() -> Self {
         Screen {
             pixels: [0; 160 * 144],
             ppu_mode: 0,
-            dots_elapsed: 0,
             obj_list: Vec::new(),
+            tile_map: TileMap::TILE_MAP_1,
+            fifo_obj: Vec::new(),
+            fifo_bg: Vec::new(),
         }
     }
 
-    fn step(&mut self, mmu: &mut MMU) {
+    pub fn step(&mut self, mmu: &mut MMU) -> u16 {
         let ly = mmu.read_byte(GPUControlRegisters::LY as u16);
 
         match self.ppu_mode {
@@ -161,37 +179,107 @@ impl Screen {
                 mmu.oam_enable = false;
                 mmu.vram_enable = true;
 
-                self.obj_list = Vec::new();
-                for i in (OAM as u16..=OAM_END as u16).step_by(4) {
+                self.obj_list.clear();
+                for i in (OAM as u16..=OAM_END as u16).step_by(DOT as usize) {
                     if self.obj_list.len() == 10 {
                         break;
                     }
-                    if mmu.read_byte(i) == ly {
-                        self.obj_list.push(oam_object::new(i, &mmu));
+                    if mmu.read_byte(i) - 16 == ly {
+                        self.obj_list.push(OamObject::new(i, &mmu));
                     }
                 }
 
                 self.ppu_mode = 3;
-                self.dots_elapsed += 80;
-            }
-            0 => {
-                //HBlank. Waits until de end of the scanline. 204 dots.
-                mmu.oam_enable = true;
-                mmu.vram_enable = true;
+                80
             }
             3 => {
                 //VRAM scan. Sends pixels to the LCD. 172-289 dots. VRAM and OAM are inaccessible
                 mmu.oam_enable = false;
                 mmu.vram_enable = false;
+                let dots = 172;
+
+                for x_coord in 0..WIDTH {
+                    let pixel_obj = self.get_pixel_obj(x_coord as u8, ly, mmu);
+                }
+
+                dots
+            }
+            0 => {
+                //HBlank. Waits until de end of the scanline. 204 dots.
+                mmu.oam_enable = true;
+                mmu.vram_enable = true;
+                0
             }
             1 => {
                 //VBlank. Waits until the next frame. 4560 dots. VRAM and OAM are accessible
                 mmu.oam_enable = true;
                 mmu.vram_enable = true;
+                0
             }
             _ => {
                 panic!("Invalid PPU mode")
             }
+        }
+    }
+
+    fn get_pixel_obj(&mut self, x: u8, y: u8, mmu: &MMU) -> Option<Pixel> {
+        let obj_in_range = self
+            .obj_list
+            .iter()
+            .filter(|obj| (obj.x..obj.x + 8).contains(&x))
+            .min_by_key(|obj| obj.x);
+
+        match obj_in_range {
+            None => None,
+            Some(obj) => Some(Pixel {
+                Color: self.get_obj_color(obj, x, y, mmu),
+                Palette: self.get_obj_palette(obj),
+                Bg_priority: self.get_obj_priority(obj),
+            }),
+        }
+    }
+
+    fn get_obj_color(&self, obj: &OamObject, x: u8, y: u8, mmu: &MMU) -> u8 {
+        // Posicion x e y dentro de la tile. se tiene en cuenta el flip
+        let x_rel = if obj.flags & 0x20 != 0 {
+            7 - (x - obj.x)
+        } else {
+            x - obj.x
+        };
+        let y_rel = if obj.flags & 0x40 != 0 {
+            7 - (y - obj.y)
+        } else {
+            y - obj.y
+        };
+
+        // Comprobar modo 8x8 o 8x16
+        let tile_base = if mmu.read_byte(GPUControlRegisters::LCDC as u16) & 0x04 != 0 {
+            obj.tile_index & 0xFE // Ignorar el bit menos significativo en modo 8x16
+        } else {
+            obj.tile_index // Usar el índice tal cual en modo 8x8
+        };
+
+        let address = 0x8000 + (tile_base as u16 * 16) + (y_rel as u16 * 2);
+        let lower = mmu.read_byte(address);
+        let higher: u8 = mmu.read_byte(address + 1);
+
+        let bit = 7 - x_rel;
+        ((higher >> bit) & 1) << 1 | ((lower >> bit) & 1)
+    }
+
+    fn get_obj_palette(&self, obj: &OamObject) -> Option<bool> {
+        if obj.flags & 0x10 != 0 {
+            Some(true)
+        } else {
+            Some(false)
+        }
+    }
+
+    fn get_obj_priority(&self, obj: &OamObject) -> bool {
+        if obj.flags & 0x80 != 0 {
+            true
+        } else {
+            false
         }
     }
 }
