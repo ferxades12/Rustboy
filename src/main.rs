@@ -16,20 +16,26 @@ const ROM_PATH: &str = r"rom\test\instr_timing\instr_timing.gb";
 fn main() {
     let mut mmu = MMU::new();
     let mut cpu = CPU::new();
+    let mut gpu = gpu::Screen::new();
+    let mut gpu_dots = 0;
     let mut last_frame_time = std::time::Instant::now();
 
     // Load the ROM into memory
     mmu.read_rom(ROM_PATH);
-    // Set initial values for registers
 
     // Start the fetch-decode-execute cycle
-
     loop {
         //print!("cycles: {}\n", cpu.registers.A);
         let mut cycles_elapsed: u32 = 0;
 
         while cycles_elapsed < CYCLES_PER_FRAME {
-            cycles_elapsed += cpu.step(&mut mmu) as u32;
+            let cycles = cpu.step(&mut mmu) as u32;
+            cycles_elapsed += cycles;
+
+            gpu_dots -= cycles * 4;
+            if gpu_dots <= 0 {
+                gpu_dots += gpu.step(&mut mmu) as u32;
+            }
         }
 
         // Sincronizar tiempo
